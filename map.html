@@ -1,0 +1,793 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>قصي ستور - خرائط</title>
+  <link rel="icon" href="https://i.ibb.co/zHC1tQ8b/1757362837638.png" type="image/png">
+
+  <!-- منع الدخول المباشر: لا تفتح إلا عبر البطاقات/التنقل الداخلي (يسمح بإعادة التحميل) -->
+  <script>
+    (function(){
+      try{
+        var nav = (performance.getEntriesByType && performance.getEntriesByType('navigation')) || [];
+        var type = nav[0] ? nav[0].type : (performance.navigation ? (performance.navigation.type === 1 ? 'reload' : (performance.navigation.type === 2 ? 'back_forward' : '')) : '');
+        var isReload = type === 'reload'; var isBF = type === 'back_forward'; var refOk=false; try{ var rr=document.referrer; if(rr){ var uu=new URL(rr); refOk=(uu.origin===location.origin);} }catch(e){} var paramsAllow=false; try{ paramsAllow=(new URLSearchParams(location.search)).has('allow'); }catch(e){} var guardOff=false; try{ guardOff=localStorage.getItem('nav:guardOff')==='1'; }catch(e){} var ok = sessionStorage.getItem('nav:fromHome') === '1'; if (!ok && !isReload && !isBF && !refOk && !paramsAllow && !guardOff) {
+          sessionStorage.setItem('nav:redirectedFrom', location.pathname.split('/').pop());
+          window.location.replace('login.html');
+        } else if (ok) {
+          sessionStorage.removeItem('nav:fromHome');
+        }
+      }catch(e){ window.location.replace('login.html'); }
+    })();
+  </script>
+
+  <!-- خطوط وأيقونات -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <!-- ملفات الهيدر القديمة -->
+  <link rel="stylesheet" href="header.css" />
+
+  <script src="header.js" defer></script>
+    <link rel="stylesheet" href="header.css">
+  <!-- Loader assets -->
+  <link rel="stylesheet" href="loader.css">
+  <script src="loader.js" defer></script>
+
+
+  <style>
+/* ========== Modal ========== */
+.modal {
+  position: fixed;
+  top: 0; right: 0; bottom: 0; left: 0;
+  background-color: rgba(0, 0, 0, 0.5); /* خلفية شفافة */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modal-content {
+  background-color: #fff;
+  padding: 30px;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  text-align: center;
+}
+
+/* ========== Base ========== */
+body {
+  font-family: 'Cairo', sans-serif;
+  margin: 0;
+  background: #f9f9f9;
+  color: #333;
+  direction: rtl;
+}
+
+.search-container {
+  margin: 20px auto;
+  max-width: 600px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 15px;
+}
+
+.search-container input[type="text"] {
+  flex: 1;
+  padding: 12px 15px;
+  border: 2px solid #0077cc;
+  border-radius: 25px;
+  font-size: 1rem;
+  outline: none;
+  transition: 0.3s;
+}
+
+.search-container input[type="text"]:focus {
+  box-shadow: 0 0 5px rgba(0, 119, 204, 0.5);
+  border-color: #005fa3;
+}
+
+.search-container button {
+  background-color: #0077cc;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 25px;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.search-container button:hover {
+  background-color: #005fa3;
+}
+
+main {
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 0 15px;
+}
+
+/* ========== Grid (Responsive Cards) ========== */
+.categories {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, max-content));
+  gap: 20px;
+  justify-content: start; /* أو center حسب رغبتك */
+  max-width: 1000px;
+  margin: auto;
+}
+
+/* ========== Card ========== */
+.card {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  padding: 16px;
+  text-decoration: none;
+  color: #333;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* صورة مربعة دائمًا بدون تعديل الـ HTML */
+.card img {
+  width: 100%;
+  /* تجعل الارتفاع = العرض بشكل تلقائي */
+  aspect-ratio: 1 / 1;
+  height: auto;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 8px;
+  user-select: none;
+  background-color: #f0f0f0;
+  display: block;
+  margin: 0 auto;
+}
+
+.card h2 {
+  font-weight: 700;
+  font-size: 1rem; /* تصغير خفيف ليتلاءم عند الشاشات الصغيرة */
+  margin: 0;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.no-results {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #888;
+  margin-top: 30px;
+}
+
+/* ========== Balance ========== */
+#userBalance {
+  margin: 20px auto;
+  max-width: 600px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: #0077cc;
+  background-color: #fff;
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  position: relative;
+}
+
+.balance-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#balanceText {
+  margin-right: 10px;
+}
+
+.loading-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #0077cc;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+  display: none; /* إخفاء حتى يبدأ التحميل */
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+#userBalance img {
+  width: 30px;
+  height: 30px;
+  margin-left: 10px;
+}
+
+/* ========== Auth Buttons ========== */
+#loginBtn {
+  position: fixed;
+  top: 5px;
+  left: 20px;
+  background-color: #0077cc;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 25px;
+  font-size: 1rem;
+  cursor: pointer;
+  z-index: 9999;
+  transition: 0.3s;
+  visibility: visible; /* يظهر أو يختفي بدون تغيير موقعه */
+}
+
+#logoutBtn {
+  position: fixed;
+  top: 5px;
+  left: 160px;
+  background-color: #cc0000;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 25px;
+  font-size: 1rem;
+  cursor: pointer;
+  z-index: 9999;
+  transition: 0.3s;
+  visibility: hidden; /* يبدأ مخفي لكن يحتفظ بمكانه */
+}
+
+#loginBtn:hover {
+  background-color: #005fa3;
+}
+
+#logoutBtn:hover {
+  background-color: #990000;
+}
+
+/* ========== Login Modal ========== */
+.login-modal {
+  position: fixed;
+  top: 0; right: 0; bottom: 0; left: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  max-width: 400px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-content input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.modal-content button {
+  padding: 10px;
+  background: #0077cc;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.modal-content button:hover {
+  background: #005fa3;
+}
+
+.modal-content .close {
+  position: absolute;
+  top: 10px;
+  left: 20px;
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+/* ========== Maintenance / Loading States ========== */
+.card.maintenance {
+  background-color: #e0e0e0 !important;
+  pointer-events: none;
+  opacity: 0.7;
+}
+.card.maintenance h2 {
+  color: #a00;
+}
+.card.maintenance img {
+  filter: grayscale(100%);
+}
+
+/* تأثير اللمعة للبطاقات أثناء التحميل */
+.card.loading {
+  position: relative;
+  background: #f0f0f0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* إخفاء المحتوى مؤقتًا */
+.card.loading img,
+.card.loading h2 {
+  visibility: hidden;
+}
+
+/* اللمعة المتحركة */
+.card.loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -150px;
+  width: 100px;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: shimmer 1.2s infinite;
+}
+
+@keyframes shimmer {
+  0% { right: -150px; }
+  100% { right: 100%; }
+}
+
+/* ========== Responsive Tweaks ========== */
+/* الشاشات الصغيرة جدًا: نجعل الحد الأدنى للبطاقة أصغر لتزيد الأعمدة */
+@media (max-width: 480px) {
+  .categories {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 14px;
+  }
+  .card {
+    padding: 12px;
+    gap: 10px;
+  }
+  .card h2 {
+    font-size: 0.95rem;
+  }
+}
+
+/* الأجهزة اللوحية: توازن بين الحجم وعدد الأعمدة */
+@media (max-width: 768px) {
+  .categories {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+}
+
+/* الشاشات المتوسطة: أعمدة أكثر مع حد أدنى مريح */
+@media (max-width: 992px) {
+  .categories {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+}
+
+
+
+
+  /* === FIXED GRID OVERRIDES (force 5 cols desktop, 3 cols phones) === */
+.categories { 
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 20px;
+  justify-content: center;
+}
+@media (max-width: 768px) {
+  .categories { 
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important; 
+    gap: 12px;
+  }
+  .card { padding: 12px !important; }
+  .card h2 { font-size: 0.9rem !important; }
+}
+@media (max-width: 480px) {
+  .categories { 
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important; 
+    gap: 10px;
+  }
+  .card { padding: 10px !important; }
+  .card h2 { font-size: 0.85rem !important; }
+}
+/* === END FIXED GRID OVERRIDES === */
+/* ===== Dark Mode (index) ===== */
+body.dark-mode {
+  background:#0b1220;
+  color:#e6edf3;
+}
+
+/* شريط البحث */
+body.dark-mode .search-container input[type="text"]{
+  background:#0b1220; color:#e6edf3; border-color:#334155;
+}
+body.dark-mode .search-container input[type="text"]:focus{
+  border-color:#38bdf8; box-shadow:0 0 6px rgba(56,189,248,.35);
+}
+body.dark-mode .search-container button{
+  background:#0369a1;
+}
+body.dark-mode .search-container button:hover{
+  background:#0ea5e9;
+}
+
+/* البطاقات */
+body.dark-mode .card{
+  background:#1a2234; color:#e6edf3; border:1px solid #334155;
+  box-shadow:0 2px 10px rgba(0,0,0,.35);
+}
+body.dark-mode .card h2{ color:#e6edf3; }
+body.dark-mode .card.loading{ background:#162032; }
+body.dark-mode .card.loading::after{
+  background: linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent);
+}
+
+/* نص “لا توجد نتائج” */
+body.dark-mode .no-results{ color:#94a3b8; }
+
+/* صندوق الرصيد */
+body.dark-mode #userBalance{
+  background:#0f172a; color:#e6edf3; border:1px solid #334155;
+  box-shadow:0 6px 18px rgba(0,0,0,.35);
+}
+body.dark-mode #balanceText{ color:#7dd3fc; }
+
+/* أزرار الدخول/الخروج */
+body.dark-mode #loginBtn{ background:#0ea5e9; }
+body.dark-mode #loginBtn:hover{ background:#3fb7ff; }
+body.dark-mode #logoutBtn{ background:#ef4444; }
+body.dark-mode #logoutBtn:hover{ background:#dc2626; }
+
+/* المودال العام + مودال تسجيل الدخول */
+body.dark-mode .modal-content{
+  background:#111827; color:#e6edf3; box-shadow:0 10px 30px rgba(0,0,0,.5);
+}
+body.dark-mode .login-modal .modal-content input{
+  background:#0b1220; color:#e6edf3; border-color:#334155;
+}
+body.dark-mode .login-modal .modal-content button{
+  background:#0369a1;
+}
+body.dark-mode .login-modal .modal-content button:hover{
+  background:#0ea5e9;
+}
+
+/* بطاقات “مغلق للصيانة” */
+body.dark-mode .card.maintenance{
+  background:#0f172a !important; color:#eab308;
+}
+
+  </style>
+</head>
+<body>
+  <div id="preloader"><div class="loader"></div></div>
+
+<div id="headerContainer"></div>
+<div id="sidebarContainer"></div>
+
+
+
+
+    <div class="loading-spinner" id="loadingSpinner"></div>
+  </div>
+</div>
+
+
+  <!-- البحث -->
+  <div class="search-container">
+    <input type="text" id="searchInput" placeholder="ابحث عن الخدمات أو التصنيفات..." aria-label="بحث" />
+    <button id="searchButton" aria-label="زر البحث"><i class="fas fa-search"></i></button>
+  </div>
+
+
+  <main>
+    <section class="categories" id="categoriesContainer">
+      <a href="freefire.html" class="card" data-title="تقييمات">
+        <img src="https://i.ibb.co/cXQ1mG6y/prod-68632f4bac1c0-1.jpg" alt="تقييمات" />
+        <h2>تقييمات 5 نجوم</h2>
+      </a>
+    
+          <a href="freefire.html" class="card" data-title="تقييمات">
+        <img src="https://i.ibb.co/cXQ1mG6y/prod-68632f4bac1c0-1.jpg" alt="تقييمات" />
+        <h2>تقييمات 5 نجوم + تعليقات عشوائية</h2>
+      </a>
+
+          <a href="freefire.html" class="card" data-title="تقييمات">
+        <img src="https://i.ibb.co/cXQ1mG6y/prod-68632f4bac1c0-1.jpg" alt="تقييمات" />
+        <h2>تقييمات 5 نجوم + تعليقات من اختيارك</h2>
+      </a>
+    </section>
+    <p class="no-results" id="noResults" style="display:none;">عذراً، لم يتم العثور على نتائج.</p>
+  </main>
+
+  <script>
+
+    function generateAuthKey() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let key = '';
+  for (let i = 0; i < 36; i++) {
+    key += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return key;
+}
+
+    // إعداد Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyB6dC1UAS0-ilt-dj9UpcLIPljwbI3FCZs",
+  authDomain: "qusaystore-ec327.firebaseapp.com",
+  projectId: "qusaystore-ec327",
+  storageBucket: "qusaystore-ec327.firebasestorage.app",
+  messagingSenderId: "701743074708",
+  appId: "1:701743074708:web:defc2de594567b6624d381",
+  measurementId: "G-00R4XQCB1V"
+};
+  firebase.initializeApp(firebaseConfig);
+
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+// دالة تحميل الرصيد
+
+
+function closeResetModal() {
+  resetModal.style.display = 'none';
+}
+auth.onAuthStateChanged(user => {
+  if (user && user.emailVerified) {
+    loadUserBalance(user.uid);
+  } else {
+    document.getElementById('balanceAmount').textContent = 'يجب تسجيل الدخول اولا';
+  }
+});
+auth.onAuthStateChanged(async (user) => {
+  if (user && user.emailVerified) {
+    const userRef = db.collection('users').doc(user.uid);
+    const docSnap = await userRef.get();
+
+    if (docSnap.exists) {
+      const data = docSnap.data();
+
+      // ✅ التحقق من الحظر
+      if (data.isBanned === true) {
+        document.body.innerHTML = `
+          <div class="modal">
+            <div class="modal-content">
+              <h2>🚫 تم تعليق الحساب</h2>
+              <p>تم تعليق حسابك بسبب أنشطة مشبوهة. إذا كنت تعتقد أن هذا خطأ، يرجى التواصل معنا.</p>
+              <button id="logoutBtnFromBan" style="
+                margin-top: 20px;
+                background-color: #cc0000;
+                color: white;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 8px;
+                font-size: 1rem;
+                cursor: pointer;
+              ">
+                تسجيل الخروج
+              </button>
+            </div>
+          </div>
+        `;
+
+        // زر تسجيل الخروج
+        document.getElementById('logoutBtnFromBan').addEventListener('click', () => {
+          firebase.auth().signOut().then(() => {
+            window.location.href = "login.html";
+          });
+        });
+
+        return; // إيقاف أي تنفيذ لاحق
+      }
+
+      // ✅ إنشاء authkey إذا لم يكن موجودًا
+      if (!data.authkey) {
+        const authkey = generateAuthKey();
+        await userRef.set({ authkey }, { merge: true });
+      }
+
+      // ✅ تحميل الرصيد والتحقق من رقم الهاتف
+      loadUserBalance(user.uid);
+      checkAndRequestPhoneNumber(user);
+
+      // ✅ تطبيق حالة البطاقات (الإغلاق حسب Firestore)
+    }
+  } else {
+    document.getElementById('balanceAmount').textContent = 'يجب تسجيل الدخول اولا';
+  }
+});
+
+
+applyCardsVisibility();
+
+
+
+function checkAndRequestPhoneNumber(user) {
+  const userRef = db.collection('users').doc(user.uid);
+
+  userRef.get().then(doc => {
+    const data = doc.data();
+    if (!data || !data.phone) {
+      showPhoneModal(user.uid);
+    }
+  });
+}
+
+function showPhoneModal(uid) {
+  // إنشاء نافذة لإدخال رقم الهاتف بنفس شكل التسجيل
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+
+  modal.innerHTML = `
+    <div class="modal-content" style="position: relative;">
+      <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+      <h3>يرجى إدخال رقم هاتفك</h3>
+      <input type="tel" id="phoneInput" placeholder="أدخل رقم الهاتف" />
+      <button onclick="savePhoneNumber('${uid}')">حفظ</button>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+}
+
+function savePhoneNumber(uid) {
+  const phone = document.getElementById('phoneInput').value.trim();
+
+  if (!phone || phone.length < 6) {
+    alert('يرجى إدخال رقم هاتف صحيح.');
+    return;
+  }
+
+  db.collection('users').doc(uid).update({ phone }).then(() => {
+    alert('تم حفظ رقم الهاتف بنجاح.');
+    document.querySelector('.modal').remove();
+  }).catch(() => {
+    alert('حدث خطأ أثناء حفظ الرقم.');
+  });
+}
+
+function applyCardsVisibility() {
+  const cards = document.querySelectorAll('.card');
+  const statesRef = db.collection('states');
+
+  statesRef.onSnapshot(snapshot => {
+    const statesMap = {};
+
+    snapshot.forEach(doc => {
+      statesMap[doc.id] = doc.data().state;
+    });
+
+    cards.forEach(card => {
+      const originalHref = card.dataset.originalHref || card.getAttribute('href');
+      const pageName = originalHref.replace('.html', '');
+      const state = statesMap[pageName];
+
+      // حفظ الرابط الأصلي في data-* لتتم استعادته لاحقًا
+      card.dataset.originalHref = originalHref;
+
+      const titleEl = card.querySelector('h2');
+      const originalTitle = card.dataset.originalTitle || titleEl.textContent;
+      card.dataset.originalTitle = originalTitle;
+
+      card.classList.remove('loading');
+
+      if (state === 'off') {
+        card.removeAttribute('href');
+        card.classList.add('maintenance');
+        if (titleEl) titleEl.textContent = '🚧 مغلق للصيانة';
+      } else {
+        // إعادة الحالة الطبيعية
+        card.setAttribute('href', card.dataset.originalHref);
+        card.classList.remove('maintenance');
+        if (titleEl) titleEl.textContent = card.dataset.originalTitle;
+      }
+    });
+  }, error => {
+    console.error("فشل مراقبة تغييرات البطاقات:", error);
+  });
+}
+
+
+document.querySelectorAll('.card').forEach(card => {
+  card.classList.add('loading');
+});
+
+  (function(){
+    try{
+      if(localStorage.getItem('theme') === 'dark'){
+        document.body.classList.add('dark-mode');
+      }
+    }catch(e){}
+  })();
+
+
+  (function(){
+  const input = document.getElementById('searchInput');
+  const btn = document.getElementById('searchButton');
+  const grid = document.getElementById('categoriesContainer');
+  const noResults = document.getElementById('noResults');
+
+  if(!input || !btn || !grid) return;
+
+  // توحيد نص عربي: إزالة التشكيل، توحيد الألف/الياء/التاء المربوطة، حذف علامات الترقيم
+  const norm = s => (s||'').toString().toLowerCase()
+    .replace(/[ًٌٍَُِّْـ]/g,'')      // الحركات + التطويل
+    .replace(/[إأآا]/g,'ا')          // أشكال الألف -> ا
+    .replace(/ى/g,'ي')               // ى -> ي
+    .replace(/ة/g,'ه')               // ة -> ه (لتوسيع التطابق)
+    .replace(/[^\p{L}\p{N}\s]/gu,'') // إزالة الرموز
+    .trim();
+
+  const cards = Array.from(grid.querySelectorAll('.card'));
+
+  function apply(query){
+    const q = norm(query);
+    let shown = 0;
+    cards.forEach(card => {
+      const title = card.dataset.title || card.querySelector('h2')?.textContent || '';
+      const ok = q === '' || norm(title).includes(q);
+      card.style.display = ok ? '' : 'none';
+      if (ok) shown++;
+    });
+    if (noResults) noResults.style.display = shown ? 'none' : 'block';
+  }
+
+  // استعادة آخر كلمة بحث وحفظ الجديد
+  const KEY = 'home:q';
+  const saved = localStorage.getItem(KEY) || '';
+  if (saved) input.value = saved;
+  apply(saved);
+
+  // زر البحث
+  btn.addEventListener('click', () => {
+    localStorage.setItem(KEY, input.value);
+    apply(input.value);
+  });
+
+  // Enter من الحقل
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      localStorage.setItem(KEY, input.value);
+      apply(input.value);
+    }
+  });
+
+  // تحديث حيّ مع إبطاء خفيف
+  let t;
+  input.addEventListener('input', () => {
+    clearTimeout(t);
+    t = setTimeout(() => apply(input.value), 150);
+  });
+})();
+  </script>
+</body>
+</html>
+
