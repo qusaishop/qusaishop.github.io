@@ -1,6 +1,22 @@
 ﻿// ===== الهيدر =====
 // ===== علامة تنقّل مبكرة على كل الصفحات =====
 (function(){
+  // Force HTTPS on public hosts (skip localhost/LAN)
+  try{
+    var h = location.hostname || '';
+    var isLocal = h === 'localhost' || h === '127.0.0.1' || /^0\.0\.0\.0$/.test(h) || /^192\.168\./.test(h) || /^10\./.test(h) || /^172\.(1[6-9]|2\d|3[0-1])\./.test(h);
+    if (location.protocol === 'http:' && !isLocal) {
+      var target = 'https://' + location.host + location.pathname + location.search + location.hash;
+      try { window.stop && window.stop(); } catch(_){ }
+      location.replace(target);
+      return;
+    }
+  }catch(_){ }
+})();
+
+// ===== الهيدر =====
+// ===== علامة تنقّل مبكرة على كل الصفحات =====
+(function(){
   function addAllow(a){
     try{
       var href = a.getAttribute('href');
