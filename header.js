@@ -25,6 +25,35 @@
   document.addEventListener('click',       mark, true);
 })();
 
+// ===== Warm loader image globally =====
+(function(){
+  try {
+    var LOADER_IMG = "https://i.ibb.co/svXFyxQk/Chat-GPT-Image-9-2025-06-11-56.png";
+    // Preconnect to host (faster handshake)
+    if (document.head && !document.querySelector("link[rel='preconnect'][href='https://i.ibb.co']")) {
+      var pc = document.createElement('link');
+      pc.rel = 'preconnect';
+      pc.href = 'https://i.ibb.co';
+      pc.crossOrigin = '';
+      document.head.appendChild(pc);
+    }
+    // Preload once per page
+    if (document.head && !document.querySelector("link[rel='preload'][as='image'][href='"+LOADER_IMG+"']")) {
+      var l = document.createElement('link');
+      l.rel = 'preload';
+      l.as  = 'image';
+      l.href = LOADER_IMG;
+      document.head.appendChild(l);
+    }
+    // Warm the cache immediately
+    var im = new Image();
+    im.decoding = 'async';
+    try { im.fetchPriority = 'high'; } catch(_){}
+    im.loading = 'eager';
+    im.src = LOADER_IMG;
+  } catch(_){}
+})();
+
 // ===== Helper: Show/Hide page loader (if present) =====
 function showPageLoader() {
   try {
