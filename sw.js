@@ -79,6 +79,7 @@ let PRECACHE_IMAGES = [
   "https://i.ibb.co/ymjYwxHS/1024.png",
   "https://i.ibb.co/ynzRJj22/1166.png",
   "https://i.ibb.co/ZYW3VTp/default.png",
+  "https://i.ibb.co/svXFyxQk/Chat-GPT-Image-9-2025-06-11-56.png",
   "https://images.ctfassets.net/y2ske730sjqp/1aONibCke6niZhgPxuiilC/2c401b05a07288746ddf3bd3943fbc76/BrandAssets_Logos_01-Wordmark.jpg",
   "https://m.media-amazon.com/images/I/71nvKD9L-iL._UF1000,1000_QL80_.jpg",
   "https://media.zid.store/d17406b9-7e45-411a-aa40-719b34321d63/0280163c-eb42-4477-96fa-d6524a702a23.png",
@@ -120,7 +121,6 @@ const EXTRA_LOCAL_IMAGES = [
   "assets/تصميم بدون عنوان (11).png",
   "assets/تصميم بدون عنوان (12).png",
   // images (additional)
-  "images/loader-logo.png",
   "images/LevelUpPass.png",
   "images/payment_1754260103_7826.png",
   "images/payment_1754260770_4984.png",

@@ -28,17 +28,19 @@ body.dark-mode #preloader {
   width: 128px;
   height: 128px;
   border-radius: 50%;
-  /* Centered image inside the loader */
-  background-image: url("images/loader-logo.png");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 90%;
   /* ألوان العلامة التجارية (يمكن تعديلها لاحقًا) */
   --c1: #007BFF; /* أزرق المتجر الأساسي */
   --c2: #00B3FF; /* سماوي فاتح (احتياطي) */
   --c3: #38BDF8; /* أكسنت سماوي مطابق بالموقع */
   filter: drop-shadow(0 6px 18px rgba(59, 130, 246, 0.35));
   transition: transform 0.4s ease, opacity 0.4s ease;
+  display: grid;               /* تمركز أي محتوى داخلي */
+  place-items: center;         /* يضمن توسيط صورة اللودر */
+  /* اجعل الصورة الخلفية تُحمّل مبكرًا جدًا مع CSS */
+  background-image: url('https://i.ibb.co/svXFyxQk/Chat-GPT-Image-9-2025-06-11-56.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 72px 72px;
 }
 
 /* درجات أفتح قليلاً في الوضع الداكن لضمان التباين */
@@ -81,4 +83,15 @@ body.dark-mode .loader {
 @media (prefers-reduced-motion: reduce) {
   .loader::before { animation-duration: 1.4s; }
   .loader::after  { animation-duration: 1.6s; }
+}
+
+/* صورة اللودر الوسطية */
+.loader img.loader-logo {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  border-radius: 12px;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
