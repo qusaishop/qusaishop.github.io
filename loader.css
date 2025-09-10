@@ -25,9 +25,14 @@ body.dark-mode #preloader {
 /* حلقة متدرّجة عصرية بخامة conic-gradient */
 .loader {
   position: relative;
-  width: 72px;
-  height: 72px;
+  width: 128px;
+  height: 128px;
   border-radius: 50%;
+  /* Centered image inside the loader */
+  background-image: url("images/loader-logo.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 90%;
   /* ألوان العلامة التجارية (يمكن تعديلها لاحقًا) */
   --c1: #007BFF; /* أزرق المتجر الأساسي */
   --c2: #00B3FF; /* سماوي فاتح (احتياطي) */

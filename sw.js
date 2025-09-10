@@ -120,6 +120,7 @@ const EXTRA_LOCAL_IMAGES = [
   "assets/تصميم بدون عنوان (11).png",
   "assets/تصميم بدون عنوان (12).png",
   // images (additional)
+  "images/loader-logo.png",
   "images/LevelUpPass.png",
   "images/payment_1754260103_7826.png",
   "images/payment_1754260770_4984.png",
