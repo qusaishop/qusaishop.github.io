@@ -426,6 +426,17 @@ a.card.auto:not(.pending-state):not(.maintenance)::after{
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    async function ensurePublicReadAuth() {
+      try {
+        if (!auth.currentUser) {
+          await auth.signInAnonymously();
+          console.log('[Auth] Signed in anonymously for public reads');
+        }
+      } catch (e) {
+        console.warn('[Auth] Anonymous sign-in failed (enable it in Firebase Console):', e);
+      }
+    }
+
     function closeResetModal() { resetModal.style.display = 'none'; }
 
     auth.onAuthStateChanged(user => {
@@ -474,47 +485,84 @@ a.card.auto:not(.pending-state):not(.maintenance)::after{
     });
 
     /* ===== تسريع ومنع النافذة الزمنية للدخول ===== */
+    const STATES_TTL_MS = 60 * 1000; // مهلة احتياطية للكاش
+    async function loadStatesMap() {
+      const ref = db.collection('config').doc('states');
+      const tryGet = async () => { try { return await ref.get({ source: 'server' }); } catch(_) { return await ref.get(); } };
+      try {
+        let doc = await tryGet();
+        if (!doc.exists) throw new Error('not-found');
+        const data = doc.data() || {};
+        let map = {};
+        if (typeof data.stateJson === 'string') { try { map = JSON.parse(data.stateJson); } catch(_) { map = {}; } }
+        else if (data.map && typeof data.map === 'object') { map = data.map; }
+        else { map = data; }
+        setStatesCache(map);
+        return { map, fromCache: false };
+      } catch (e) {
+        try {
+          if (e && e.code === 'permission-denied' && auth && !auth.currentUser && auth.signInAnonymously) {
+            await auth.signInAnonymously();
+            const doc = await tryGet();
+            if (doc && doc.exists) {
+              const data = doc.data() || {};
+              let map = {};
+              if (typeof data.stateJson === 'string') { try { map = JSON.parse(data.stateJson); } catch(_) { map = {}; } }
+              else if (data.map && typeof data.map === 'object') { map = data.map; }
+              else { map = data; }
+              setStatesCache(map);
+              return { map, fromCache: false };
+            }
+          }
+        } catch(_) {}
+        const fallback = getStatesCache();
+        return { map: (fallback && fallback.map) ? fallback.map : {}, fromCache: true };
+      }
+    }
+
     function applyCardsVisibility() {
       const cards = document.querySelectorAll('.card');
-      const statesRef = db.collection('states');
 
-      // 1) اقفل كل البطاقات فورًا وأظهر الصور
-      lockAllCards();
-
-      // 2) طبّق كاش محلي فورًا
+      // 0) تحضير الكاش وتحديد حداثته
       const cached = getStatesCache();
-      if (cached && cached.map) {
+      const isFresh = !!(cached && cached.ts && (Date.now() - cached.ts) < 120000 && cached.map);
+
+      // 1) إذا الكاش حديث: طبّق فورًا كامل الحالات بدون قفل مسبق
+      if (isFresh) {
         cards.forEach(card => {
           const pageName = (card.dataset.originalHref || card.getAttribute('href') || '').replace('.html','');
           const state = cached.map.hasOwnProperty(pageName) ? cached.map[pageName] : 'on';
           applyCardState(card, state);
         });
+      } else {
+        // خلاف ذلك: اقفل ثم افتح العناصر التي حالتها on في الكاش لتقليل الانتظار
+        lockAllCards();
+        if (cached && cached.map) {
+          cards.forEach(card => {
+            const pageName = (card.dataset.originalHref || card.getAttribute('href') || '').replace('.html','');
+            const state = cached.map.hasOwnProperty(pageName) ? cached.map[pageName] : 'on';
+            if (String(state).toLowerCase() === 'on') applyCardState(card, 'on');
+          });
+        }
       }
 
-      // 3) اشتراك Firestore
-      statesRef.onSnapshot({ includeMetadataChanges: true }, snapshot => {
-        const statesMap = {};
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          statesMap[doc.id] = (data && data.state) ? data.state : 'on';
+      // 2) جلب وثيقة واحدة فقط بصيغة JSON وتطبيقها
+      try { if (auth && !auth.currentUser && auth.signInAnonymously) { auth.signInAnonymously().catch(()=>{}); } } catch(_){ }
+      loadStatesMap()
+        .then(({ map }) => {
+          cards.forEach(card => {
+            const pageName = (card.dataset.originalHref || card.getAttribute('href') || '').replace('.html','');
+            const state = Object.prototype.hasOwnProperty.call(map, pageName) ? map[pageName] : 'on';
+            applyCardState(card, state);
+          });
+        })
+        .catch(error => {
+          try { localStorage.removeItem('statesCache'); } catch(_){}
+          document.querySelectorAll('.card').forEach(card => applyCardState(card, 'on'));
         });
-
-        const fromCache = snapshot.metadata.fromCache === true;
-
-        cards.forEach(card => {
-          const pageName = (card.dataset.originalHref || card.getAttribute('href') || '').replace('.html','');
-          const state = statesMap.hasOwnProperty(pageName) ? statesMap[pageName] : 'on';
-          applyCardState(card, state);
-        });
-
-        if (!fromCache) setStatesCache(statesMap);
-      }, error => {
-        console.error("فشل مراقبة تغييرات البطاقات:", error);
-        // افتح البطاقات بدل تركها مقفلة إذا حدث خطأ
-        document.querySelectorAll('.card').forEach(card => applyCardState(card, 'on'));
-      });
     }
 
+    // ابدأ مباشرة دون الانتظار
     applyCardsVisibility();
 
     function checkAndRequestPhoneNumber(user) {

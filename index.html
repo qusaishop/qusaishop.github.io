@@ -493,15 +493,7 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <script>
-    /* ===== كاش/أدوات الحالات ===== */
-    function getStatesCache() {
-      try { const raw = localStorage.getItem('statesCache'); return raw ? JSON.parse(raw) : null; }
-      catch { return null; }
-    }
-    function setStatesCache(map) {
-      try { localStorage.setItem('statesCache', JSON.stringify({ ts: Date.now(), map })); }
-      catch {}
-    }
+    /* ===== أدوات الحالات (بدون localStorage) ===== */
     function lockAllCards() {
       document.querySelectorAll('.card').forEach(card => {
         // خزّن href والعنوان الأصليين
@@ -616,47 +608,67 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
     });
 
     /* ===== تسريع ومنع النافذة الزمنية للدخول ===== */
-    function applyCardsVisibility() {
-      const cards = document.querySelectorAll('.card');
-      const statesRef = db.collection('states');
-
-      // 1) اقفل كل البطاقات فورًا وأظهر الصور
-      lockAllCards();
-
-      // 2) طبّق كاش محلي فورًا
-      const cached = getStatesCache();
-      if (cached && cached.map) {
-        cards.forEach(card => {
-          const pageName = (card.dataset.originalHref || card.getAttribute('href') || '').replace('.html','');
-          const state = cached.map.hasOwnProperty(pageName) ? cached.map[pageName] : 'on';
-          applyCardState(card, state);
-        });
+    // حمل خريطة الحالات من وثيقة واحدة بصيغة JSON لتقليل القراءات
+    const STATES_TTL_MS = 60 * 1000; // لم يعد هناك كاش محلي
+    async function loadStatesMap() {
+      const ref = db.collection('config').doc('states');
+      const tryGet = async () => {
+        try { return await ref.get({ source: 'server' }); } catch(_) { return await ref.get(); }
+      };
+      try {
+        let doc = await tryGet();
+        if (!doc.exists) throw new Error('not-found');
+        const data = doc.data() || {};
+        let map = {};
+        if (typeof data.stateJson === 'string') {
+          try { map = JSON.parse(data.stateJson); } catch(_) { map = {}; }
+        } else if (data.map && typeof data.map === 'object') {
+          map = data.map;
+        } else {
+          map = data;
+        }
+        return { map, fromCache: false };
+      } catch (e) {
+        // إن كانت أذونات القراءة مطلوبة، جرّب الدخول المجهول ثم أعد المحاولة مرة واحدة
+        try {
+          if (e && e.code === 'permission-denied' && auth && !auth.currentUser && auth.signInAnonymously) {
+            await auth.signInAnonymously();
+            const doc = await tryGet();
+            if (doc && doc.exists) {
+              const data = doc.data() || {};
+              let map = {};
+              if (typeof data.stateJson === 'string') { try { map = JSON.parse(data.stateJson); } catch(_) { map = {}; } }
+              else if (data.map && typeof data.map === 'object') { map = data.map; }
+              else { map = data; }
+              return { map, fromCache: false };
+            }
+          }
+        } catch(_) { /* تجاهل */ }
+        return { map: {}, fromCache: true };
       }
-
-      // 3) اشتراك Firestore
-      statesRef.onSnapshot({ includeMetadataChanges: true }, snapshot => {
-        const statesMap = {};
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          statesMap[doc.id] = (data && data.state) ? data.state : 'on';
-        });
-
-        const fromCache = snapshot.metadata.fromCache === true;
-
-        cards.forEach(card => {
-          const pageName = (card.dataset.originalHref || card.getAttribute('href') || '').replace('.html','');
-          const state = statesMap.hasOwnProperty(pageName) ? statesMap[pageName] : 'on';
-          applyCardState(card, state);
-        });
-
-        if (!fromCache) setStatesCache(statesMap);
-      }, error => {
-        console.error("فشل مراقبة تغييرات البطاقات:", error);
-        // افتح البطاقات بدل تركها مقفلة إذا حدث خطأ
-        document.querySelectorAll('.card').forEach(card => applyCardState(card, 'on'));
-      });
     }
 
+    function applyCardsVisibility() {
+      const cards = document.querySelectorAll('.card');
+      // اقفل مؤقتًا ثم اجلب من Firebase فقط
+      lockAllCards();
+
+      // جلب وثيقة واحدة فقط بصيغة JSON وتطبيقها (حاول المصادقة مجهولاً بالتوازي عند الحاجة)
+      try { if (auth && !auth.currentUser && auth.signInAnonymously) { auth.signInAnonymously().catch(()=>{}); } } catch(_){ }
+      loadStatesMap()
+        .then(({ map }) => {
+          cards.forEach(card => {
+            const pageName = (card.dataset.originalHref || card.getAttribute('href') || '').replace('.html','');
+            const state = Object.prototype.hasOwnProperty.call(map, pageName) ? map[pageName] : 'on';
+            applyCardState(card, state);
+          });
+        })
+        .catch(error => {
+          document.querySelectorAll('.card').forEach(card => applyCardState(card, 'on'));
+        });
+    }
+
+    // ابدأ مباشرة دون الانتظار
     applyCardsVisibility();
 
     function checkAndRequestPhoneNumber(user) {

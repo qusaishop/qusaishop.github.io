@@ -3,22 +3,10 @@
  <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <script>
-    (function(){
-      try{
-        var h = location.hostname || '';
-        var isLocal = h === 'localhost' || h === '127.0.0.1' || h === '' || /^0\.0\.0\.0$/.test(h) || /^192\.168\./.test(h) || /^10\./.test(h) || /^172\.(1[6-9]|2\d|3[0-1])\./.test(h);
-        if (location.protocol === 'http:' && !isLocal) {
-          var target = 'https://' + location.host + location.pathname + location.search + location.hash;
-          window.location.replace(target);
-        }
-      }catch(e){}
-    })();
-  </script>
  <title>قصي ستور - فري فاير</title>
   <link rel="icon" href="https://i.ibb.co/zHC1tQ8b/1757362837638.png" type="image/png">
 
-  <!-- حارس مبكر: منع فتح الصفحة مباشرةً أو إن كانت البطاقة مغلقة -->
+  <!-- حارس مبكر: منع فتح الصفحة مباشرةً فقط (بدون الاعتماد على كاش الحالات) -->
   <script>
     (function(){
       try{
@@ -26,20 +14,7 @@
         var page = base.replace(/\.html$/,'');
         var redirectTo = 'index.html';
 
-        // 1) افحص كاش حالات البطاقات (مخزنة من الصفحة الرئيسية)
-        try{
-          var raw = localStorage.getItem('statesCache');
-          if (raw){
-            var obj = JSON.parse(raw);
-            var map = obj && obj.map ? obj.map : null;
-            if (map && page && map[page] === 'off'){
-              try{ sessionStorage.setItem('nav:reason','closed:'+page); }catch(_){ }
-              return window.location.replace(redirectTo);
-            }
-          }
-        }catch(_){/* ignore */}
-
-        // 2) امنع الدخول المباشر إن لم يكن من داخل الموقع
+        // امنع الدخول المباشر إن لم يكن من داخل الموقع
         var nav = (performance.getEntriesByType && performance.getEntriesByType('navigation')) || [];
         var type = nav[0] ? nav[0].type : (performance.navigation ? (performance.navigation.type === 1 ? 'reload' : (performance.navigation.type === 2 ? 'back_forward' : '')) : '');
         var isReload = type === 'reload';
