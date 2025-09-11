@@ -132,7 +132,7 @@ header.appendChild(hamburger);
 
 // الشعار
 const logo = document.createElement("img");
-logo.src = "https://i.ibb.co/Jw8XwRLg/Picsart-25-08-21-23-54-55-228.png";
+logo.src = "https://i.ibb.co/C3TWgd6n/1.gif";
 logo.alt = "Store Logo";
 logo.className = "header-logo";
 logo.setAttribute("fetchpriority","high");
