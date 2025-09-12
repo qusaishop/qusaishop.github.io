@@ -682,7 +682,7 @@ a.card.auto:not(.pending-state):not(.maintenance)::after{
       input.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => apply(input.value), 150); });
     });
   </script>
- <script>
+<script>
 // Gate: require login, and page state must be open in Firestore 'states'
 (function(){
   function getPageId(){ try{ return (location.pathname.split('/').pop()||'').replace('.html',''); }catch(_){ return '' } }
