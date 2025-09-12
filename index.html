@@ -610,7 +610,7 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
 
     /* ===== تسريع ومنع النافذة الزمنية للدخول ===== */
     // حمل خريطة الحالات من وثيقة واحدة بصيغة JSON لتقليل القراءات
-    const STATES_TTL_MS = 5 * 60 * 1000; // مدة صلاحية كاش الحالات (5 دقائق)
+    const STATES_TTL_MS = 60 * 1000; // لم يعد هناك كاش محلي
     async function loadStatesMap() {
       const ref = db.collection('config').doc('states');
       const tryGet = async () => {
@@ -628,8 +628,6 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
         } else {
           map = data;
         }
-        // خزِّن بالخزان المحلي ليستفيد باقي الصفحات بدون قراءة جديدة
-        try { localStorage.setItem('statesCache', JSON.stringify({ ts: Date.now(), ttl: STATES_TTL_MS, map })); } catch(_){}
         return { map, fromCache: false };
       } catch (e) {
         // إن كانت أذونات القراءة مطلوبة، جرّب الدخول المجهول ثم أعد المحاولة مرة واحدة
@@ -643,7 +641,6 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
               if (typeof data.stateJson === 'string') { try { map = JSON.parse(data.stateJson); } catch(_) { map = {}; } }
               else if (data.map && typeof data.map === 'object') { map = data.map; }
               else { map = data; }
-              try { localStorage.setItem('statesCache', JSON.stringify({ ts: Date.now(), ttl: STATES_TTL_MS, map })); } catch(_){}
               return { map, fromCache: false };
             }
           }

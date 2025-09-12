@@ -20,12 +20,9 @@
           if (raw){
             var obj = JSON.parse(raw);
             var map = obj && obj.map ? obj.map : null;
-            var ts  = obj && obj.ts ? Number(obj.ts) : 0;
-            var ttl = obj && obj.ttl ? Number(obj.ttl) : (5*60*1000);
-            var fresh = ts && (Date.now() - ts) <= ttl;
-            if (fresh && map && page && String(map[page]).toLowerCase() !== 'on'){
+            if (map && page && map[page] === 'off'){
               try{ sessionStorage.setItem('nav:reason','closed:'+page); }catch(_){ }
-              // لا تعيد التوجيه؛ اسمح للصفحة بالتحميل وسيعرض header.js مودال الصيانة
+              return window.location.replace(redirectTo);
             }
           }
         }catch(_){/* ignore */}
@@ -1167,23 +1164,21 @@ window.addEventListener('DOMContentLoaded', () => {
   
   </script>
   <script>
-// Gate: require login، واستخدم كاش الحالات لعرض الصيانة بدون قراءة جديدة
+// Gate: require login, and page state must be open in Firestore 'states'
 (function(){
   function getPageId(){ try{ return (location.pathname.split('/').pop()||'').replace('.html',''); }catch(_){ return '' } }
-  firebase.auth().onAuthStateChanged(function(user){
+  firebase.auth().onAuthStateChanged(async function(user){
     if(!user){ try{ location.href = 'login.html'; }catch(_){} return; }
     try{
-      var raw = localStorage.getItem('statesCache');
-      if (!raw) return; // لا نقرأ مرة أخرى
-      var obj = JSON.parse(raw)||{}; var map = obj.map||{}; var ts = Number(obj.ts||0); var ttl = Number(obj.ttl||300000);
-      var fresh = ts && (Date.now()-ts) <= ttl;
-      if (!fresh) return;
-      var pageId = getPageId(); if (!pageId) return;
-      var st = String(map[pageId] || 'on').toLowerCase();
-      if (st !== 'on') {
-        try{ window.showMaintenanceOverlay && window.showMaintenanceOverlay(); }catch(_){ }
+      var pageId = getPageId();
+      if(!pageId) return; // if unknown, allow
+      var doc = await firebase.firestore().collection('states').doc(pageId).get();
+      var st = doc && doc.exists ? (doc.data() && (doc.data().state || doc.data().status || 'on')) : 'on';
+      if(String(st).toLowerCase() !== 'on'){
+        // redirect back to games list if this card is closed
+        try{ location.href = 'games.html'; }catch(_){}
       }
-    }catch(_){ }
+    }catch(e){ /* if check fails, allow to avoid blocking */ }
   });
 })();
 </script>
