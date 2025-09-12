@@ -1,0 +1,250 @@
+  transition: transform .45s ease, filter .35s ease;
+  will-change: transform;
+}
+#myOffersContainer .offer-box.card:hover img,
+.card:hover img{
+  transform: scale(1.06) translateY(-2px);
+  filter: saturate(1.08) contrast(1.05);
+}
+
+/* اجعل الشبكة تتحكم بعرض العناصر وليس قيم style1.css القديمة */
+.offer-box.card{ width:auto !important; margin:0 !important; }
+
+/* منع خروج المحتوى خارج حدود صندوق الحقول إن وجدت */
+.offers-box{
+  overflow: hidden;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto 24px auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+@media (min-width: 1200px) {
+  .offers-box {
+    max-width: 750px;
+  }
+}
+
+/* نسخة auto (اختياري): نفس التنسيق الخاص والرفع الخفيف */
+#myOffersContainer .offer-box.card.auto,
+a.card.auto{
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(var(--card-bg),var(--card-bg)) padding-box,
+    linear-gradient(135deg,#06b6d4,#10b981) border-box;
+}
+html[data-theme="dark"] #myOffersContainer .offer-box.card.auto{
+  background:
+    linear-gradient(var(--card-bg),var(--card-bg)) padding-box,
+    linear-gradient(135deg,#22c55e,#06b6d4) border-box;
+}
+#myOffersContainer .offer-box.card.auto:hover{
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 16px 36px rgba(0,0,0,.18), 0 0 28px rgba(250,204,21,.16);
+}
+
+/* استجابة للشاشات الصغيرة */
+  /* إزالة أي قواعد متضاربة لعدد الأعمدة على الشاشات الصغيرة */
+    @media (max-width: 768px) {
+      .categories {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+      }
+    }
+    @media (max-width: 600px) {
+      .categories {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+      }
+    }
+    @media (max-width: 480px) {
+      .categories {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 6px !important;
+      }
+    }
+
+
+
+</style> 
+
+</head>
+ <body>
+  <div id="headerContainer"></div>
+  <div id="sidebarContainer"></div>
+
+  <div id="preloader">
+  <div class="loader"></div>
+</div>
+
+<!-- تمت إزالة تكرار تضمين اللودر من أسفل الصفحة -->
+
+  <!-- Toast (مرتين في ملفك الأصلي؛ نُبقي واحدًا فقط لتجنب التعارض) -->
+  <div id="toast" style="
+    visibility: hidden;
+    min-width: 250px;
+    margin-left: -125px;
+    background-color: #323232;
+    color: #fff;
+    text-align: center;
+    border-radius: 12px;
+    padding: 16px;
+    position: fixed;
+    z-index: 9999;
+    left: 50%;
+    bottom: 30px;
+    font-size: 16px;
+    box-shadow: 0px 2px 10px rgba(0,0,0,0.2);
+    transition: visibility 0s, opacity 0.5s ease-in-out;
+    opacity: 0;">
+    <span id="toast-message"></span>
+  </div>
+
+  <form id="orderForm" novalidate>
+    <div class="container">
+
+      
+
+      <!-- نافذة الشراء المنبثقة -->
+      <div id="purchase-modal">
+        <div class="pm-card" role="dialog" aria-modal="true">
+          <div class="pm-header">
+            <span id="pm-price" class="pm-pill">—</span>
+            <div class="pm-title">
+              <i class="fa-regular fa-heart" aria-hidden="true"></i>
+              <span id="pm-title">—</span>
+            </div>
+          </div>
+          <div class="pm-input">
+            <input id="player-id" type="text" inputmode="numeric" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="ادخل الايدي هنا" />
+            
+          </div>
+          <div class="pm-actions">
+            <button type="button" id="pm-cancel" class="btn btn-outline">إلغاء</button>
+            <button type="button" id="pm-buy" class="btn btn-primary">شراء</button>
+          </div>
+          <div class="pm-note">الخدمة يدوية وتستغرق وقتا اكثر من الخدمات التلقائيه</div>
+          
+        </div>
+      </div>
+
+      
+
+      
+      <!-- شريط البحث (مطابق لـ weplayinbut) -->
+      <div class="search-container">
+        <input type="text" id="ffSearchInput" placeholder="ابحث عن الباقات..." aria-label="بحث" />
+      </div>
+
+
+        <div id="myOffersContainer"></div>
+
+        
+      </div>
+    </div>
+
+    <!-- رسالة لا نتائج مثل الرئيسية -->
+    <p class="no-results" id="ffNoResults" style="display:none;">عذراً، لم يتم العثور على نتائج.</p>
+
+    <div style="height: 40px;"></div>
+    <div id="footerContainer"></div>
+  </form>
+
+  <script>
+
+
+(function(){
+  try{
+    var saved = localStorage.getItem('theme');
+    if(saved === 'dark'){
+      document.body.classList.add('dark-mode');
+    }
+  }catch(e){}
+})();
+  // ===== Footer =====
+  const footer = document.createElement("footer");
+  footer.className = "footer-icons";
+  const footerTitle = document.createElement("h2");
+  footerTitle.className = "footer-title";
+  footerTitle.textContent = "لماذا تختارنا؟";
+  footer.appendChild(footerTitle);
+  const iconBoxesData = [
+    { iconClass: "fas fa-shipping-fast shipping-icon", title: "شحن سريع", desc: "يتميز متجرنا بسرعته الفائقة بالشحن فبمجرد أن تطلب سيتم الشحن لك مباشرة" },
+    { iconClass: "fas fa-lock", title: "آمن 100%", desc: "حماية كاملة للبيانات والمعاملات" },
+    { iconClass: "fas fa-headset", title: "دعم فني مستمر", desc: "دعم فني مستمر لمساعدة العملاء عند الحاجة" },
+    { iconClass: "fas fa-coins special-icon", title: "اسعار مميزة", desc: "نقدم اسعار اقل من اسعار اللعبة" },
+    { iconClass: "fas fa-credit-card", title: "سهولة الدفع", desc: "طرق دفع عديدة" },
+    { iconClass: "fas fa-shield-alt", title: "ضمان على الشحن", desc: "احصل على كامل المبلغ مع تعويض في حالة عدم وصول الشحنه" },
+    { iconClass: "fas fa-sync-alt", title: "تحديثات مستمرة", desc: "نقوم بحل جميع المشاكل بشكل دوري" },
+    { iconClass: "fas fa-tasks", title: "تعقب الطلبات", desc: "يمكنك رؤية حالة الطلبات الخاص بك من تبويب طلباتي" },
+    { iconClass: "fas fa-undo", title: "الغاء الطلبات", desc: "يمكنك الغاء اي طلب قبل اتمام عملية الدفع عبر التواصل مع الدعم الفني" },
+    { iconClass: "fas fa-server", title: "تخزين للطلبات", desc: "يتم وضع الطلبات في سيرفرات لعدم فقدانها تحت اي ضرف" }
+  ];
+
+  iconBoxesData.forEach(({ iconClass, title, desc }) => {
+    const box = document.createElement("div");
+    box.className = "icon-box";
+    const icon = document.createElement("i"); icon.className = iconClass; box.appendChild(icon);
+    const h3 = document.createElement("h3"); h3.textContent = title; box.appendChild(h3);
+    const p = document.createElement("p"); p.textContent = desc; box.appendChild(p);
+    footer.appendChild(box);
+  });
+
+  // ===== بطاقات العروض =====
+  function createOfferBox({ type, gold, offer, imgSrc, imgAlt }, pricesObj) {
+      const div = document.createElement("div");
+      div.className = "offer-box card";
+      div.dataset.type = type;
+      if (gold) div.dataset.gold = gold;
+      if (offer) div.dataset.offer = offer;
+      div.onclick = function () { openPurchaseModal(this); };
+      const img = document.createElement("img");
+      img.src = imgSrc; img.alt = imgAlt;
+      img.loading = 'lazy'; img.decoding = 'async'; img.setAttribute('fetchpriority','low');
+      div.appendChild(img);
+      const h2 = document.createElement("h2"); h2.textContent = gold ? `${gold} ذهب` : offer; div.appendChild(h2);
+      // إضافة السعر أسفل الاسم
+      const priceDiv = document.createElement("div");
+      priceDiv.className = "offer-price";
+      let price = null;
+      if (pricesObj) {
+        const key = gold ? `${gold}_gold` : offer;
+        price = pricesObj[key] !== undefined ? pricesObj[key] : null;
+      }
+      priceDiv.textContent = price !== null ? `${Number(price).toFixed(2)} د.أ` : "—";
+      div.appendChild(priceDiv);
+      return div;
+  }
+
+  const offersBox = document.createElement("div"); offersBox.className = "offers-box";
+  const grid = document.createElement("section"); grid.className = "categories"; offersBox.appendChild(grid);
+  const topupOffers = [
+  { gold: 3000,  imgSrc: "https://i.ibb.co/hFGnwDYT/1756415246638.jpg", imgAlt: "3000 ذهب وي بلي" },
+  { gold: 10000, imgSrc: "https://i.ibb.co/hFGnwDYT/1756415246638.jpg", imgAlt: "10000 ذهب وي بلي" },
+  { gold: 50000, imgSrc: "https://i.ibb.co/hFGnwDYT/1756415246638.jpg", imgAlt: "50000 ذهب وي بلي" }
+
+
+];
+  // حفظ آخر حالة للعروض
+  let _lastOffersState = null;
+  function renderOffers(pricesObj) {
+    grid.innerHTML = "";
+    topupOffers.forEach(offer => { grid.appendChild(createOfferBox({ type: "topup", gold: offer.gold, imgSrc: offer.imgSrc, imgAlt: offer.imgAlt }, pricesObj)); });
+    membershipOffers.forEach(offer => { grid.appendChild(createOfferBox({ type: "membership", offer: offer.offer, imgSrc: offer.imgSrc, imgAlt: offer.imgAlt }, pricesObj)); });
+    // بعد رسم البطاقات، أعد تطبيق حالة الإغلاق إذا كانت متوفرة
+    if (_lastOffersState) {
+      Object.entries(_lastOffersState.topup || {}).forEach(([gold, status]) => {
+        const card = grid.querySelector(`.offer-box[data-type="topup"][data-gold="${gold}"]`);
+        if (card) {
+          card.classList.toggle('disabled', status === 'off');
+          card.style.opacity = status === 'off' ? '0.4' : '1';
+          let badge = card.querySelector('.unavailable-badge');
+          if (status === 'off') {
+            if (!badge) {
+              badge = document.createElement('div');
+              badge.className = 'unavailable-badge';
+              badge.textContent = 'غير متوفر';
+              card.appendChild(badge);
+            }
+          } else if (badge) {

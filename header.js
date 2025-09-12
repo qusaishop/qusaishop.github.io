@@ -616,3 +616,210 @@ document.addEventListener('pointerdown', function(e){
   // استمع لتغييرات الرصيد اللحظية
   try { window.addEventListener('balance:change', (e)=>{ setBox(e?.detail?.value ?? null); }); } catch(_){}
 })();
+
+// ===== Mobile Bottom Dock (شريط سفلي للجوال) =====
+(function initMobileDock(){
+  try{
+    // تأكد من وجود Font Awesome للأيقونات إن لم تُضمَّن من الصفحة
+    try{
+      var hasFA = !!document.querySelector('link[href*="font-awesome"], link[href*="fontawesome"], link[href*="/fa"], link[href*="/all.min.css"]');
+      if (!hasFA){
+        var fa = document.createElement('link');
+        fa.rel = 'stylesheet';
+        fa.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css';
+        fa.crossOrigin = 'anonymous';
+        document.head.appendChild(fa);
+      }
+    }catch(_){ }
+
+    // أنشئ العناصر مرة واحدة
+    var dock = document.createElement('nav');
+    dock.className = 'mobile-dock';
+    dock.setAttribute('aria-label','الشريط السفلي للجوال');
+
+    function makeBtn(html, key, href){
+      if (href){
+        var a = document.createElement('a');
+        a.href = href;
+        a.innerHTML = html;
+        a.className = 'dock-item';
+        a.dataset.key = key;
+        return a;
+      } else {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.innerHTML = html;
+        b.className = 'dock-item';
+        b.dataset.key = key;
+        return b;
+      }
+    }
+
+    // عناصر ثابتة بنفس الترتيب على كل الصفحات
+    var searchBtn  = makeBtn('<i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>', 'search',  'search.html');
+    searchBtn.setAttribute('aria-label','بحث شامل');
+
+    var storeBtn   = makeBtn('<i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>', 'store',   'games.html');
+    storeBtn.setAttribute('aria-label','المتجر/الألعاب');
+
+    var ordersBtn  = makeBtn('<i class="fa-solid fa-list" aria-hidden="true"></i>',            'orders',  'talabat.html');
+    ordersBtn.setAttribute('aria-label','طلباتي');
+
+    var depositBtn = makeBtn('<i class="fa-solid fa-coins" aria-hidden="true"></i>',           'deposit', 'edaa.html');
+    depositBtn.setAttribute('aria-label','شحن الرصيد');
+
+    var homeBtn    = makeBtn('<i class="fa-solid fa-house" aria-hidden="true"></i>',            'home',    'index.html');
+    homeBtn.setAttribute('aria-label','الرئيسية');
+
+    dock.appendChild(searchBtn);
+    dock.appendChild(storeBtn);
+    dock.appendChild(ordersBtn);
+    dock.appendChild(depositBtn);
+    dock.appendChild(homeBtn);
+
+    // أضفه بعد تحميل DOM
+    window.addEventListener('DOMContentLoaded', function(){
+      try{
+        document.body.appendChild(dock);
+        document.body.classList.add('mobile-has-dock');
+      }catch(_){ }
+    });
+
+    // سلوك زر البحث: انتقال لصفحة البحث الشامل
+    searchBtn.addEventListener('click', function(e){
+      try { showPageLoader(); } catch(_){ }
+      // عند كونه رابطًا لن نمنع السلوك الافتراضي
+    });
+
+    // تمييز العنصر النشط وفق المسار
+    function highlight(){
+      try{
+        var p = (location.pathname.split('/').pop()||'').toLowerCase();
+        var gamePages = new Set(['games.html','freefire.html','freefireauto.html','freefiremembership.html','freefireinbut.html','freefiren.html','pubg.html','weplay.html','bloodstrike.html','roblox.html','jawaker.html','yala.html','8ball.html','mobailleg.html','instainbut.html']);
+        var key = 'home';
+        if (p === 'index.html') key = 'home';
+        else if (p === 'search.html') key = 'search';
+        else if (p === 'talabat.html') key = 'orders';
+        else if (p === 'edaa.html') key = 'deposit';
+        else if (gamePages.has(p)) key = 'store';
+        dock.querySelectorAll('.dock-item').forEach(function(el){ el.classList.remove('active'); });
+        if (key){
+          var el = dock.querySelector('.dock-item[data-key="'+key+'"]');
+          if (el) el.classList.add('active');
+        }
+      }catch(_){ }
+    }
+    window.addEventListener('DOMContentLoaded', highlight);
+    window.addEventListener('pageshow', highlight);
+  }catch(_){ }
+})();
+
+// ===== Page state cache + maintenance modal =====
+(function pageStateGuard(){
+  const STATES_TTL_MS = 5 * 60 * 1000; // 5 دقائق
+
+  function readStatesCache(){
+    try{
+      const raw = localStorage.getItem('statesCache');
+      if (!raw) return null;
+      const obj = JSON.parse(raw);
+      if (!obj || !obj.map) return null;
+      const ts = Number(obj.ts || 0);
+      const ttl = Number(obj.ttl || STATES_TTL_MS);
+      if (!Number.isFinite(ts) || (Date.now() - ts) > ttl) return null;
+      return obj.map;
+    }catch(_){ return null; }
+  }
+
+  function getPageId(){
+    try{ return (location.pathname.split('/').pop()||'').replace('.html',''); }catch(_){ return ''; }
+  }
+
+  function showMaintenanceOverlay(){
+    if (document.getElementById('maint-overlay')) return;
+    const ov = document.createElement('div');
+    ov.id = 'maint-overlay';
+    ov.setAttribute('role','dialog');
+    ov.setAttribute('aria-modal','true');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:14000;background:rgba(2,8,23,.65);display:flex;align-items:center;justify-content:center;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)';
+    const card = document.createElement('div');
+    card.style.cssText = 'width:min(520px,92vw);background:var(--card-bg,#ffffff);color:var(--card-text,#111);border:1px solid var(--card-border,#e5e7eb);border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.35);padding:22px;direction:rtl;text-align:center';
+    card.innerHTML = '<h2 style="margin:0 0 8px 0;font-weight:800">الخدمة قيد الصيانة</h2>'+
+                     '<p style="margin:0 0 14px 0;color:#94a3b8">هذه الصفحة مغلقة مؤقتاً. الرجاء المحاولة لاحقاً.</p>'+
+                     '<div style="display:flex;gap:12px;justify-content:center">'+
+                     '  <button id="maint-back" style="padding:10px 16px;border-radius:12px;border:1px solid #0ea5e9;background:#0ea5e9;color:#fff;font-weight:800;cursor:pointer">العودة للرئيسية</button>'+
+                     '</div>';
+    ov.appendChild(card);
+    card.querySelector('#maint-back').addEventListener('click', function(){
+      try { sessionStorage.setItem('nav:fromHome','1'); } catch(_){ }
+      try { if (typeof showPageLoader === 'function') showPageLoader(); } catch(_){ }
+      location.href = 'index.html?allow=1';
+    });
+    document.body.appendChild(ov);
+    // امنع التفاعل مع المحتوى تحت المودال
+    try{ document.body.classList.add('modal-open'); }catch(_){ }
+    return ov;
+  }
+
+  // إتاحة الدالة عالمياً للاستخدام من الصفحات
+  try { window.showMaintenanceOverlay = showMaintenanceOverlay; } catch(_){ }
+
+  function writeStatesCache(map){
+    try{ localStorage.setItem('statesCache', JSON.stringify({ ts: Date.now(), ttl: STATES_TTL_MS, map })); }catch(_){ }
+  }
+
+  async function fetchStatesIfPossible(){
+    try{
+      if (typeof firebase === 'undefined' || !firebase.firestore) return null;
+      const db = firebase.firestore();
+      const ref = db.collection('config').doc('states');
+      const tryGet = async () => { try { return await ref.get({ source: 'server' }); } catch(_){ return await ref.get(); } };
+      // محاولة أولى
+      let snap = await tryGet();
+      if (!snap || !snap.exists){ return null; }
+      let data = snap.data() || {};
+      let map = {};
+      if (typeof data.stateJson === 'string') { try{ map = JSON.parse(data.stateJson); }catch(_){ map = {}; } }
+      else if (data.map && typeof data.map === 'object') { map = data.map; }
+      else { map = data; }
+      writeStatesCache(map);
+      return map;
+    }catch(e){
+      // handle permission denied via anonymous auth once
+      try{
+        if (e && e.code === 'permission-denied' && typeof firebase !== 'undefined' && firebase.auth && !firebase.auth().currentUser){
+          await firebase.auth().signInAnonymously();
+          const db = firebase.firestore();
+          const ref = db.collection('config').doc('states');
+          const snap = await ref.get();
+          if (snap && snap.exists){
+            const data = snap.data() || {};
+            let map = {};
+            if (typeof data.stateJson === 'string') { try{ map = JSON.parse(data.stateJson); }catch(_){ map = {}; } }
+            else if (data.map && typeof data.map === 'object') { map = data.map; }
+            else { map = data; }
+            writeStatesCache(map);
+            return map;
+          }
+        }
+      }catch(_){ }
+      return null;
+    }
+  }
+
+  async function check(){
+    const page = getPageId();
+    if (!page) return;
+    let map = readStatesCache();
+    if (!map){
+      // جلب كسول مرة واحدة فقط عند عدم توفر الكاش
+      map = await fetchStatesIfPossible();
+    }
+    if (!map) return; // لا مزيد من المحاولات إذا لم يتوفر
+    const st = (map[page] || 'on').toString().toLowerCase();
+    if (st !== 'on') showMaintenanceOverlay();
+  }
+
+  window.addEventListener('DOMContentLoaded', function(){ check(); });
+  window.addEventListener('pageshow', function(){ check(); });
+})();

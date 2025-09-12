@@ -1,0 +1,250 @@
+            badge.remove();
+          }
+        }
+      });
+      Object.entries(_lastOffersState.membership || {}).forEach(([offerName, status]) => {
+        const card = grid.querySelector(`.offer-box[data-type="membership"][data-offer="${offerName}"]`);
+        if (card) {
+          card.classList.toggle('disabled', status === 'off');
+          card.style.opacity = status === 'off' ? '0.4' : '1';
+          let badge = card.querySelector('.unavailable-badge');
+          if (status === 'off') {
+            if (!badge) {
+              badge = document.createElement('div');
+              badge.className = 'unavailable-badge';
+              badge.textContent = 'غير متوفر';
+              card.appendChild(badge);
+            }
+          } else if (badge) {
+            badge.remove();
+          }
+        }
+      });
+    }
+  }
+
+  const membershipOffersGrid = document.createElement("div");
+  const membershipOffers = [
+{ offer: "VIP 1 شهر",            imgSrc: "https://i.ibb.co/hFGnwDYT/1756415246638.jpg", imgAlt: "VIP 1 شهر" },
+{ offer: "VIP 3 أشهر",           imgSrc: "https://i.ibb.co/hFGnwDYT/1756415246638.jpg", imgAlt: "VIP 3 أشهر" },
+{ offer: "VIP 12 شهر",           imgSrc: "https://i.ibb.co/hFGnwDYT/1756415246638.jpg", imgAlt: "VIP 12 شهر" },
+{ offer: "إصدار فاخر لبطاقة المرح",  imgSrc: "https://i.ibb.co/hFGnwDYT/1756415246638.jpg", imgAlt: "إصدار فاخر لبطاقة المرح" },
+{ offer: "إصدار متقدم لبطاقة المرح", imgSrc: "https://i.ibb.co/hFGnwDYT/1756415246638.jpg", imgAlt: "إصدار متقدم لبطاقة المرح" }
+
+];
+
+  // عند تحميل الصفحة، انتظر تحميل الأسعار ثم اعرض البطاقات
+  function waitAndRenderOffers() {
+    let tries = 0;
+    function tryRender() {
+      let pricesObj = null;
+      try {
+        const raw = JSON.parse(localStorage.getItem("offersPrices") || "{}") || {};
+        pricesObj = raw.prices || raw;
+      } catch {}
+      if (pricesObj && Object.keys(pricesObj).length > 0) {
+        renderOffers(pricesObj);
+        try { if (typeof updatePurchaseModalPriceIfOpen === 'function') updatePurchaseModalPriceIfOpen(); } catch(_){}
+      } else if (tries < 20) {
+        tries++;
+        setTimeout(tryRender, 200);
+      } else {
+        renderOffers(null);
+      }
+    }
+    tryRender();
+  }
+  waitAndRenderOffers();
+
+  // إعادة تحميل البطاقات تلقائياً عند تحديث الأسعار في localStorage
+  window.addEventListener('storage', function(e){
+    if (e.key === 'offersPrices') {
+      let pricesObj = null;
+      try {
+        const raw = JSON.parse(e.newValue || "{}") || {};
+        pricesObj = raw.prices || raw;
+      } catch {}
+      renderOffers(pricesObj);
+      try { if (typeof updatePurchaseModalPriceIfOpen === 'function') updatePurchaseModalPriceIfOpen(); } catch(_){}
+    }
+  });
+
+  // دعم التحديث الفوري حتى في نفس التبويب (override setItem)
+  (function(){
+    const origSetItem = localStorage.setItem;
+    localStorage.setItem = function(key, val){
+      origSetItem.apply(this, arguments);
+      if(key === 'offersPrices'){
+        let pricesObj = null;
+        try {
+          const raw = JSON.parse(val || "{}") || {};
+          pricesObj = raw.prices || raw;
+        } catch {}
+        renderOffers(pricesObj);
+        try { if (typeof updatePurchaseModalPriceIfOpen === 'function') updatePurchaseModalPriceIfOpen(); } catch(_){}
+      }
+    };
+  })();
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const container = document.getElementById("myOffersContainer");
+    if (container) container.appendChild(offersBox);
+    // البحث مثل inbut
+    const input = document.getElementById('ffSearchInput');
+    const btn = document.getElementById('ffSearchButton');
+    const apply = () => filterCardsBySearch({ target: { value: input.value } });
+    btn && btn.addEventListener('click', apply);
+    input && input.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); apply(); }});
+    let t; input && input.addEventListener('input', ()=>{ clearTimeout(t); t=setTimeout(apply,150); });
+  });
+
+  // ===== حساب السعر وعرضه =====
+function toggleOffer(element) {
+  if (element.classList.contains("disabled")) { 
+    showToast("غير متوفر", "warning"); 
+    return; 
+  }
+
+  // ✅ إلغاء تحديد جميع العروض الأخرى
+  document.querySelectorAll('.offer-box.selected').forEach(el => {
+    el.classList.remove('selected');
+  });
+
+  // ✅ تحديد العنصر الحالي فقط
+
+  const selectedOffers = [{
+    type: element.dataset.type,
+    gold: element.dataset.gold || null,
+    offerName: element.dataset.offer || null
+  }];
+
+  // ✅ قراءة الأسعار من localStorage
+  const raw = JSON.parse(localStorage.getItem("offersPrices") || "{}");
+  const offersPrices = raw.prices || raw;
+
+  let total = 0; 
+  const breakdownLines = [];
+  const key = element.dataset.gold ? `${element.dataset.gold}_gold` : element.dataset.offer;
+  const price = offersPrices[key];
+  if (price !== undefined) {
+    total += Number(price);
+const nameText  = element.dataset.gold ? `${element.dataset.gold} ذهب` : element.dataset.offer;
+const priceText = `${Number(price).toFixed(2)} د.أ`;
+breakdownLines.push(
+  `<span class="item-name">${nameText}</span> : <span class="item-price">${priceText}</span>`
+);
+
+  } else {
+    breakdownLines.push(`• ${element.dataset.gold || element.dataset.offer}: ❓ غير معروف`);
+  }
+
+const el = document.getElementById("selected-amount");
+
+if (breakdownLines.length === 0) {
+  // لا يوجد أي عنصر مختار
+  el.textContent = "لم يتم اختيار عرض شحن";
+  el.classList.add("no-selection");
+} else 
+  // يوجد عناصر مختارة
+  el.innerHTML = `${breakdownLines.join("<br>")}<br><br><strong>المجموع: ${total.toFixed(2)} د.أ</strong>`;
+  el.classList.remove("no-selection");
+}
+
+// فلترة البحث بنفس أسلوب weplayinbut + إظهار رسالة لا نتائج كالرئيسية
+function filterCardsBySearch(ev){
+  const raw = (ev.target.value || '').toString();
+  const norm = s => s.toLowerCase()
+    .replace(/[ًٌٍَُِّْـ]/g,'')
+    .replace(/[إأآا]/g,'ا')
+    .replace(/ى/g,'ي')
+    .replace(/ة/g,'ه')
+    .replace(/[^\p{L}\p{N}\s]/gu,'')
+    .trim();
+  const q = norm(raw);
+  const cards = document.querySelectorAll('.offer-box.card');
+  let shown = 0;
+  if (!q){ cards.forEach(c => {c.style.display=''; shown++;}); } else {
+    cards.forEach(c => {
+      const gold = (c.dataset.gold || '').toString();
+      const offer  = (c.dataset.offer  || '');
+      const text   = norm(`${gold} ${offer}`);
+      const ok = text.includes(q);
+      c.style.display = ok ? '' : 'none';
+      if (ok) shown++;
+    });
+  }
+  const noRes = document.getElementById('ffNoResults');
+  if (noRes) noRes.style.display = shown ? 'none' : 'block';
+}
+
+// ===== نافذة الشراء =====
+window._pm_currentCard = null;
+function _readOfferPriceForElement(el){
+  const raw = JSON.parse(localStorage.getItem("offersPrices") || "{}");
+  const prices = raw.prices || raw || {};
+  const key = el.dataset.gold ? `${el.dataset.gold}_gold` : el.dataset.offer;
+  const p = prices[key];
+  const num = p !== undefined ? Number(p) : NaN;
+  return { key, price: p, priceText: isNaN(num)? '—' : `${num.toFixed(3)} د.أ` };
+}
+
+  // تحديث سعر المودال لحظياً إن كان مفتوحاً عند وصول الأسعار
+  function updatePurchaseModalPriceIfOpen(){
+    try{
+      const pm = document.getElementById('purchase-modal');
+      if (!pm || !pm.classList.contains('show')) return;
+      if (!window._pm_currentCard) return;
+      const { priceText } = _readOfferPriceForElement(window._pm_currentCard);
+      const el = document.getElementById('pm-price');
+      if (el) el.textContent = priceText || '—';
+    }catch(_){/* ignore */}
+  }
+
+  // مراقبة إغلاق البطاقة أثناء فتح النافذة
+  let _pm_watchInterval = null;
+  function openPurchaseModal(el){
+    if (el.classList.contains('disabled')){
+      showToast('غير متوفر', 'warning');
+      closePurchaseModal();
+      return;
+    }
+    // اجعل البطاقة المختارة هي فقط المحددة
+    document.querySelectorAll('.offer-box.selected').forEach(x => x.classList.remove('selected'));
+    el.classList.add('selected');
+    window._pm_currentCard = el;
+    const title = el.dataset.gold ? `${el.dataset.gold} ذهب` : (el.dataset.offer || '—');
+    const { priceText } = _readOfferPriceForElement(el);
+    document.getElementById('pm-title').textContent = title;
+    document.getElementById('pm-price').textContent = priceText;
+    const pid  = document.getElementById('player-id');
+    const mpid = document.getElementById('modal-player-id');
+    if (pid && mpid) mpid.value = (pid.value || '').trim();
+    const pm = document.getElementById('purchase-modal');
+    try{
+      const ts = document.getElementById('cf-turnstile-modal');
+      if (ts){
+        const isDark = document.body.classList.contains('dark-mode')
+          || (document.documentElement.getAttribute('data-theme')||'').toLowerCase()==='dark';
+        ts.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      }
+    }catch(_){}
+    pm.classList.add('show');
+    document.body.classList.add('modal-open');
+    // راقب حالة البطاقة المختارة وأغلق النافذة إذا أُغلقت البطاقة
+    if (_pm_watchInterval) clearInterval(_pm_watchInterval);
+    _pm_watchInterval = setInterval(function(){
+      if (_pm_currentCard && _pm_currentCard.classList.contains('disabled')) {
+        closePurchaseModal();
+        showToast('غير متوفر', 'warning');
+        clearInterval(_pm_watchInterval);
+        _pm_watchInterval = null;
+      }
+    }, 400);
+  }
+
+  function closePurchaseModal(){
+    const pm = document.getElementById('purchase-modal');
+    pm.classList.remove('show');
+    document.body.classList.remove('modal-open');
+    document.querySelectorAll('.offer-box.selected').forEach(x => x.classList.remove('selected'));
+    if (window._pm_watchInterval) {
