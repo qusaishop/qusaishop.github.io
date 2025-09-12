@@ -216,10 +216,17 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
     }
   </style>
   <script>
-  // Register Service Worker early to warm image cache on first visit
-  if ('serviceWorker' in navigator) {
-    try { navigator.serviceWorker.register('sw.js'); } catch(e) { console.warn('SW register failed', e); }
-  }
+  // Register Service Worker only in secure contexts (https or localhost)
+  (function(){
+    try {
+      var h = (location.hostname||'');
+      var isLocal = h === 'localhost' || h === '127.0.0.1' || /^0\.0\.0\.0$/.test(h) || /^192\.168\./.test(h) || /^10\./.test(h) || /^172\.(1[6-9]|2\d|3[0-1])\./.test(h);
+      var isSecure = (typeof window.isSecureContext === 'boolean' ? window.isSecureContext : false) || location.protocol === 'https:' || isLocal;
+      if ('serviceWorker' in navigator && isSecure) {
+        navigator.serviceWorker.register('sw.js').catch(function(e){ console.warn('SW register failed', e); });
+      }
+    } catch(e) { console.warn('SW register skipped', e); }
+  })();
   </script>
 
   <!-- Preload/Warm important game images for seamless navigation -->
@@ -491,7 +498,6 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check-compat.js"></script>
 
   <script>
     /* ===== أدوات الحالات (بدون localStorage) ===== */
@@ -630,9 +636,10 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
         }
         return { map, fromCache: false };
       } catch (e) {
-        // إن كانت أذونات القراءة مطلوبة، جرّب الدخول المجهول ثم أعد المحاولة مرة واحدة
+        // إن كانت الأذونات تمنع القراءة، يمكن تفعيل الدخول المجهول عند الحاجة
         try {
-          if (e && e.code === 'permission-denied' && auth && !auth.currentUser && auth.signInAnonymously) {
+          var ENABLE_ANON = false; // عطِّل افتراضيًا لتجنّب أخطاء 400
+          if (ENABLE_ANON && e && e.code === 'permission-denied' && auth && !auth.currentUser && auth.signInAnonymously) {
             await auth.signInAnonymously();
             const doc = await tryGet();
             if (doc && doc.exists) {
@@ -654,8 +661,13 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
       // اقفل مؤقتًا ثم اجلب من Firebase فقط
       lockAllCards();
 
-      // جلب وثيقة واحدة فقط بصيغة JSON وتطبيقها (حاول المصادقة مجهولاً بالتوازي عند الحاجة)
-      try { if (auth && !auth.currentUser && auth.signInAnonymously) { auth.signInAnonymously().catch(()=>{}); } } catch(_){ }
+      // جلب وثيقة واحدة فقط بصيغة JSON وتطبيقها (بدون مصادقة مجهولة افتراضيًا)
+      try {
+        var ENABLE_ANON = false;
+        if (ENABLE_ANON && auth && !auth.currentUser && auth.signInAnonymously) {
+          auth.signInAnonymously().catch(()=>{});
+        }
+      } catch(_){ }
       loadStatesMap()
         .then(({ map }) => {
           cards.forEach(card => {
@@ -795,7 +807,7 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
     });
   </script>
   <!-- تمت إزالة ماسح صفحات HTML: أصبح التحميل المسبق للصور عبر Service Worker فقط -->
-  <script src="appcheck-init.js"></script>
+  
 </body>
 </html>
 

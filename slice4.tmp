@@ -182,7 +182,7 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 })();
 </script>
-  <script src="appcheck-init.js"></script>
+  
 </body>
 </html>
 

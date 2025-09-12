@@ -546,15 +546,20 @@ document.addEventListener('dragstart', function (e) {
 
 // ===== Service Worker register (images cache) =====
 (function(){
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/sw.js", { scope: "/" })
-      .catch(function(e){ /* silent */ });
-    if (!navigator.serviceWorker.controller) {
-      navigator.serviceWorker.addEventListener("controllerchange", function(){
-        try { window.location.reload(); } catch (e) {}
-      });
+  try{
+    var h = (location.hostname||'');
+    var isLocal = h === 'localhost' || h === '127.0.0.1' || /^0\.0\.0\.0$/.test(h) || /^192\.168\./.test(h) || /^10\./.test(h) || /^172\.(1[6-9]|2\d|3[0-1])\./.test(h);
+    var isSecure = (typeof window.isSecureContext === 'boolean' ? window.isSecureContext : false) || location.protocol === 'https:' || isLocal;
+    if ("serviceWorker" in navigator && isSecure) {
+      navigator.serviceWorker.register("/sw.js", { scope: "/" })
+        .catch(function(e){ /* silent */ });
+      if (!navigator.serviceWorker.controller) {
+        navigator.serviceWorker.addEventListener("controllerchange", function(){
+          try { window.location.reload(); } catch (e) {}
+        });
+      }
     }
-  }
+  }catch(_){}
 })();
 
 // ===== Card tap ripple & press effect (delegated) =====
