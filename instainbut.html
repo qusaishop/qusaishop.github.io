@@ -678,22 +678,20 @@ a.card.auto:not(.pending-state):not(.maintenance)::after{
       input.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => apply(input.value), 150); });
     });
   </script>
-<script>
-// Gate: require login, and page state must be open in Firestore 'states'
+ <script>
+// Gate: require login، واستخدم كاش الحالات المحلي لعرض الصيانة بدون قراءات جديدة
 (function(){
   function getPageId(){ try{ return (location.pathname.split('/').pop()||'').replace('.html',''); }catch(_){ return '' } }
-  firebase.auth().onAuthStateChanged(async function(user){
+  firebase.auth().onAuthStateChanged(function(user){
     if(!user){ try{ location.href = 'login.html'; }catch(_){} return; }
     try{
-      var pageId = getPageId();
-      if(!pageId) return; // if unknown, allow
-      var doc = await firebase.firestore().collection('states').doc(pageId).get();
-      var st = doc && doc.exists ? (doc.data() && (doc.data().state || doc.data().status || 'on')) : 'on';
-      if(String(st).toLowerCase() !== 'on'){
-        // redirect back to games list if this card is closed
-        try{ location.href = 'games.html'; }catch(_){}
-      }
-    }catch(e){ /* if check fails, allow to avoid blocking */ }
+      var raw = localStorage.getItem('statesCache'); if(!raw) return;
+      var obj = JSON.parse(raw)||{}; var map=obj.map||{}; var ts=Number(obj.ts||0); var ttl=Number(obj.ttl||300000);
+      var fresh = ts && (Date.now()-ts) <= ttl; if(!fresh) return;
+      var pageId = getPageId(); if(!pageId) return;
+      var st = String(map[pageId] || 'on').toLowerCase();
+      if (st !== 'on') { try{ window.showMaintenanceOverlay && window.showMaintenanceOverlay(); }catch(_){ } }
+    }catch(_){ }
   });
 })();
 </script>

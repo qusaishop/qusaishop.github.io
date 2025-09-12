@@ -820,6 +820,29 @@ document.addEventListener('pointerdown', function(e){
     if (st !== 'on') showMaintenanceOverlay();
   }
 
-  window.addEventListener('DOMContentLoaded', function(){ check(); });
-  window.addEventListener('pageshow', function(){ check(); });
+  function scheduleEnsure(){
+    let tries = 0;
+    const maxTries = 12; // ~6 ثوانٍ عند interval=500ms
+    const interval = 500;
+    const timer = setInterval(async function(){
+      tries++;
+      const map = readStatesCache();
+      if (map){
+        clearInterval(timer);
+        await check();
+        return;
+      }
+      // حاول الجلب عندما تصبح Firebase متوفرة
+      if (typeof firebase !== 'undefined' && firebase.firestore){
+        const m = await fetchStatesIfPossible();
+        if (m){ clearInterval(timer); await check(); return; }
+      }
+      if (tries >= maxTries){ clearInterval(timer); }
+    }, interval);
+  }
+
+  window.addEventListener('DOMContentLoaded', function(){ check().then(scheduleEnsure); });
+  window.addEventListener('pageshow', function(){ check().then(scheduleEnsure); });
+  window.addEventListener('load', function(){ scheduleEnsure(); });
+  window.addEventListener('storage', function(e){ try{ if (e && e.key === 'statesCache') { check(); } }catch(_){ } });
 })();
