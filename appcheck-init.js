@@ -1,7 +1,7 @@
 // Firebase App Check activation (Compat) for the whole site
 // Uses reCAPTCHA v3 site key provided by the owner
 (function () {
-  var SITE_KEY = '6LfiuccrAAAAAH4RakuklZ_AHOM9IPQTrQ3x0JHV';
+  var SITE_KEY = '6LcL5ccrAAAAAIaZ1PVAIWMtVBiHVm_IJzeiP2in';
   var attempts = 0;
   var maxAttempts = 300; // ~60s with 200ms interval
 
@@ -34,4 +34,3 @@
 
   tryActivate();
 })();
-
