@@ -423,8 +423,9 @@ a.card.auto:not(.pending-state):not(.maintenance)::after{
     const db = firebase.firestore();
 
     async function ensurePublicReadAuth() {
+      const ENABLE_ANON = false; // disable anonymous auth by default
       try {
-        if (!auth.currentUser) {
+        if (ENABLE_ANON && !auth.currentUser) {
           await auth.signInAnonymously();
           console.log('[Auth] Signed in anonymously for public reads');
         }
@@ -497,7 +498,8 @@ a.card.auto:not(.pending-state):not(.maintenance)::after{
         return { map, fromCache: false };
       } catch (e) {
         try {
-          if (e && e.code === 'permission-denied' && auth && !auth.currentUser && auth.signInAnonymously) {
+          var ENABLE_ANON = false;
+          if (ENABLE_ANON && e && e.code === 'permission-denied' && auth && !auth.currentUser && auth.signInAnonymously) {
             await auth.signInAnonymously();
             const doc = await tryGet();
             if (doc && doc.exists) {
@@ -542,8 +544,8 @@ a.card.auto:not(.pending-state):not(.maintenance)::after{
         }
       }
 
-      // 2) جلب وثيقة واحدة فقط بصيغة JSON وتطبيقها (حاول المصادقة مجهولاً بالتوازي)
-      try { if (auth && !auth.currentUser && auth.signInAnonymously) { auth.signInAnonymously().catch(()=>{}); } } catch(_){ }
+      // 2) جلب وثيقة واحدة فقط بصيغة JSON وتطبيقها (بدون مصادقة مجهولة افتراضيًا)
+      try { var ENABLE_ANON = false; if (ENABLE_ANON && auth && !auth.currentUser && auth.signInAnonymously) { auth.signInAnonymously().catch(()=>{}); } } catch(_){ }
       loadStatesMap()
         .then(({ map }) => {
           cards.forEach(card => {

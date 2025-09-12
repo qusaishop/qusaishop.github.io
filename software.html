@@ -450,7 +450,8 @@ a.card.auto:hover{ transform:translateY(-4px) scale(1.01); box-shadow:0 16px 36p
         return { map, fromCache: false };
       } catch (e) {
         try {
-          if (e && e.code === 'permission-denied' && auth && !auth.currentUser && auth.signInAnonymously) {
+          var ENABLE_ANON = false;
+          if (ENABLE_ANON && e && e.code === 'permission-denied' && auth && !auth.currentUser && auth.signInAnonymously) {
             await auth.signInAnonymously();
             const doc = await tryGet();
             if (doc && doc.exists) {
@@ -473,8 +474,8 @@ a.card.auto:hover{ transform:translateY(-4px) scale(1.01); box-shadow:0 16px 36p
       // اقفل مؤقتًا ثم اجلب من Firebase فقط
       lockAllCards();
 
-      // 2) جلب وثيقة واحدة فقط بصيغة JSON وتطبيقها (حاول المصادقة مجهولاً بالتوازي)
-      try { if (auth && !auth.currentUser && auth.signInAnonymously) { auth.signInAnonymously().catch(()=>{}); } } catch(_){ }
+      // 2) جلب وثيقة واحدة فقط بصيغة JSON وتطبيقها (بدون مصادقة مجهولة افتراضيًا)
+      try { var ENABLE_ANON = false; if (ENABLE_ANON && auth && !auth.currentUser && auth.signInAnonymously) { auth.signInAnonymously().catch(()=>{}); } } catch(_){ }
       loadStatesMap()
         .then(({ map }) => {
           cards.forEach(card => {
