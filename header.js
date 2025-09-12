@@ -145,6 +145,14 @@ logo.decoding = "async";
   }
 } catch(e){} })();
 
+// لف الشعار برابط يقود إلى الصفحة الرئيسية
+const logoLink = document.createElement('a');
+logoLink.href = 'index.html';
+logoLink.setAttribute('aria-label', 'العودة إلى الرئيسية');
+// لضمان دفع الشعار لأقصى اليمين ضمن flex
+logoLink.style.marginLeft = 'auto';
+logoLink.appendChild(logo);
+
 // عنصر الرصيد داخل الهيدر
 const balanceSpan = document.createElement("span");
 balanceSpan.id = "balanceHeader";
@@ -174,7 +182,7 @@ leftContainer.appendChild(hamburger);
 leftContainer.appendChild(balanceSpan);
 
 // ضعه في أقصى يسار الهيدر
-header.appendChild(logo); // الشعار في أقصى اليمين
+header.appendChild(logoLink); // الشعار (كرابط) في أقصى اليمين
 header.appendChild(leftContainer); // الهامبرغر والرصيد في اليسار
 
 // ===== مستمع الرصيد اللحظي =====

@@ -1088,6 +1088,7 @@
 
 <!-- Firebase + Scripts: kept as in original file -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
@@ -1517,5 +1518,20 @@
 </script>
 
 
+  <script src="appcheck-init.js"></script>
+  <script type="module">
+    import { getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js";
+    try {
+      const app = getApp();
+      initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider('6LfiuccrAAAAAH4RakuklZ_AHOM9IPQTrQ3x0JHV'),
+        isTokenAutoRefreshEnabled: true
+      });
+      console.log('[AppCheck] Activated (module)');
+    } catch (e) {
+      console.warn('[AppCheck] Module activation failed', e);
+    }
+  </script>
 </body>
 </html>
