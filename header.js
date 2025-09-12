@@ -616,3 +616,102 @@ document.addEventListener('pointerdown', function(e){
   // استمع لتغييرات الرصيد اللحظية
   try { window.addEventListener('balance:change', (e)=>{ setBox(e?.detail?.value ?? null); }); } catch(_){}
 })();
+
+// ===== Mobile Bottom Dock (شريط سفلي للجوال) =====
+(function initMobileDock(){
+  try{
+    // تأكد من وجود Font Awesome للأيقونات إن لم تُضمَّن من الصفحة
+    try{
+      var hasFA = !!document.querySelector('link[href*="font-awesome"], link[href*="fontawesome"], link[href*="/fa"], link[href*="/all.min.css"]');
+      if (!hasFA){
+        var fa = document.createElement('link');
+        fa.rel = 'stylesheet';
+        fa.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css';
+        fa.crossOrigin = 'anonymous';
+        document.head.appendChild(fa);
+      }
+    }catch(_){ }
+
+    // أنشئ العناصر مرة واحدة
+    var dock = document.createElement('nav');
+    dock.className = 'mobile-dock';
+    dock.setAttribute('aria-label','الشريط السفلي للجوال');
+
+    function makeBtn(html, key, href){
+      if (href){
+        var a = document.createElement('a');
+        a.href = href;
+        a.innerHTML = html;
+        a.className = 'dock-item';
+        a.dataset.key = key;
+        return a;
+      } else {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.innerHTML = html;
+        b.className = 'dock-item';
+        b.dataset.key = key;
+        return b;
+      }
+    }
+
+    // عناصر ثابتة بنفس الترتيب على كل الصفحات
+    var searchBtn  = makeBtn('<i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>', 'search',  'search.html');
+    searchBtn.setAttribute('aria-label','بحث شامل');
+
+    var storeBtn   = makeBtn('<i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>', 'store',   'games.html');
+    storeBtn.setAttribute('aria-label','المتجر/الألعاب');
+
+    var ordersBtn  = makeBtn('<i class="fa-solid fa-list" aria-hidden="true"></i>',            'orders',  'talabat.html');
+    ordersBtn.setAttribute('aria-label','طلباتي');
+
+    var depositBtn = makeBtn('<i class="fa-solid fa-coins" aria-hidden="true"></i>',           'deposit', 'edaa.html');
+    depositBtn.setAttribute('aria-label','شحن الرصيد');
+
+    var homeBtn    = makeBtn('<i class="fa-solid fa-house" aria-hidden="true"></i>',            'home',    'index.html');
+    homeBtn.setAttribute('aria-label','الرئيسية');
+
+    dock.appendChild(searchBtn);
+    dock.appendChild(storeBtn);
+    dock.appendChild(ordersBtn);
+    dock.appendChild(depositBtn);
+    dock.appendChild(homeBtn);
+
+    // أضفه بعد تحميل DOM
+    window.addEventListener('DOMContentLoaded', function(){
+      try{
+        document.body.appendChild(dock);
+        document.body.classList.add('mobile-has-dock');
+      }catch(_){ }
+    });
+
+    // سلوك زر البحث: انتقال لصفحة البحث الشامل
+    searchBtn.addEventListener('click', function(e){
+      try { showPageLoader(); } catch(_){ }
+      // عند كونه رابطًا لن نمنع السلوك الافتراضي
+    });
+
+    // تمييز العنصر النشط وفق المسار
+    function highlight(){
+      try{
+        var p = (location.pathname.split('/').pop()||'').toLowerCase();
+        var gamePages = new Set(['games.html','freefire.html','freefireauto.html','freefiremembership.html','freefireinbut.html','freefiren.html','pubg.html','weplay.html','bloodstrike.html','roblox.html','jawaker.html','yala.html','8ball.html','mobailleg.html','instainbut.html']);
+        var key = 'home';
+        if (p === 'index.html') key = 'home';
+        else if (p === 'search.html') key = 'search';
+        else if (p === 'talabat.html') key = 'orders';
+        else if (p === 'edaa.html') key = 'deposit';
+        else if (gamePages.has(p)) key = 'store';
+        dock.querySelectorAll('.dock-item').forEach(function(el){ el.classList.remove('active'); });
+        if (key){
+          var el = dock.querySelector('.dock-item[data-key="'+key+'"]');
+          if (el) el.classList.add('active');
+        }
+      }catch(_){ }
+    }
+    window.addEventListener('DOMContentLoaded', highlight);
+    window.addEventListener('pageshow', highlight);
+  }catch(_){ }
+})();
+
+// (تمت إزالة حارس الحالات الجديد وإرجاع سلوك الإغلاق القديم المعتمد على Firestore في الصفحات)

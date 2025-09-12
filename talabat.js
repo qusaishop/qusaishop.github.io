@@ -9,7 +9,10 @@ const firebaseConfig = {
   measurementId: "G-00R4XQCB1V"
 };
 
-const app = firebase.initializeApp(firebaseConfig);
+// Reuse existing app if already initialized on this page
+const app = (firebase.apps && firebase.apps.length)
+  ? firebase.app()
+  : firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
