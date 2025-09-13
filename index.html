@@ -110,7 +110,8 @@
     --modal-bg:#fff; --modal-text:var(--text); --modal-shadow:0 5px 15px rgba(0,0,0,.3);
     --warn-bg:#fff3cd; --warn-text:#7a5d00; --warn-border:#ffe69c;
     --skeleton:#f0f0f0; --shimmer-stripe:rgba(255,255,255,.4); --border-strong:#e5e7eb;
-    --bg-app: linear-gradient(135deg, #f7fbff 0%, #e6f6ff 100%);
+    /* اجعل خلفية الجسم تعتمد على لون ثابت مثل games.html */
+    --bg-app: var(--bg);
   }
   html[data-theme="dark"] {
     --bg:#0b1220; --text:#e6edf3; --muted:#94a3b8;
@@ -121,7 +122,8 @@
     --modal-bg:#111827; --modal-text:#e6edf3; --modal-shadow:0 10px 30px rgba(0,0,0,.5);
     --warn-bg:#2b2f3a; --warn-text:#facc15; --warn-border:#334155;
     --skeleton:#162032; --shimmer-stripe:rgba(255,255,255,.15); --border-strong:#334155;
-    --bg-app: linear-gradient(180deg, #0b1220 0%, #0b172a 100%);
+    /* خلفية الجسم ثابتة لتطابق games.html */
+    --bg-app: var(--bg);
   }
   </style>
 
@@ -216,7 +218,7 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
       /* تقليل المسافة داخل النسخة الواحدة بدلًا من إضافة فجوة بين النسختين */
       .notice-ticker .ticker-copy{ gap:24px }
       .notice-ticker span{ font-size:1rem }
-      .search-container{ margin:8px 8px 10px; padding:0 10px }
+      .search-container{ margin:8px 8px 10px; padding:0 }
       .page-hero{ margin:8px 8px 10px; padding:0 }
       .page-hero img{ border-radius:10px }
       .search-container input[type="text"]{ font-size:1rem; padding:10px 12px }
