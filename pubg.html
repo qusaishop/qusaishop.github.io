@@ -89,18 +89,18 @@
         if(window.__SKIP_FIREBASE__ && typeof firebase!=='undefined'){
           try{
             var noOp=function(){};
-            var stubAuth={ onAuthStateChanged:function(cb){ try{cb(null);}catch(_){ } return noOp; }, currentUser:null, signInAnonymously:function(){ return Promise.reject(new Error('skip')); }, signOut:function(){ return Promise.resolve(); } };
             function stubDoc(){ return { get:function(){ return Promise.resolve({exists:false,data:function(){return {};},id:''}); }, set:function(){ return Promise.resolve(); }, update:function(){ return Promise.resolve(); }, onSnapshot:function(){ return noOp; } }; }
             function stubCol(){ return { doc:function(){ return stubDoc(); }, where:function(){ return stubCol(); }, orderBy:function(){ return stubCol(); }, limit:function(){ return stubCol(); }, get:function(){ return Promise.resolve({ empty:true, forEach:noOp, docs:[] }); }, onSnapshot:function(){ return noOp; } }; }
             var stubDb={ collection:function(){ return stubCol(); }, doc:function(){ return stubDoc(); } };
             try{ window.__ORIG_FIREBASE__ = { auth: firebase.auth, firestore: firebase.firestore }; }catch(_){ }
-            firebase.auth = function(){ return stubAuth; };
+            
             firebase.firestore = function(){ return stubDb; };
           }catch(_){ }
         }
       }catch(_){ window.__SKIP_FIREBASE__ = false; }
     })();
-  </script>`r`n    <script>
+  </script>
+    <script>
   (function(){
     function applyCardState(card, state){
       var finalState = (state == null) ? 'on' : state;
@@ -1296,6 +1296,8 @@ window.addEventListener('DOMContentLoaded', () => {
   
 </body>
 </html>
+
+
 
 
 
