@@ -3,6 +3,9 @@
 // ===== Global fast-reload guard (applies to all pages) =====
 (function(){
   try{
+    var file = (location.pathname.split('/').pop()||'').toLowerCase();
+    var isIndex = (file === '' || file === 'index.html');
+    if (!isIndex) { window.__SKIP_FIREBASE__ = false; return; }
     var KEY = 'global:loadTimes';
     var now = Date.now();
     var arr = [];
@@ -13,7 +16,6 @@
     try { localStorage.setItem(KEY, JSON.stringify(arr.slice(-10))); } catch(_){ }
     window.__SKIP_FIREBASE__ = (arr.length >= 3);
 
-    // If skipping, provide safe stubs so page code doesn't throw or ping network
     if (window.__SKIP_FIREBASE__ && typeof firebase !== 'undefined'){
       (function(){
         try{
@@ -21,7 +23,6 @@
           function stubDoc(){ return { get:function(){ return Promise.resolve({ exists:false, data:function(){return {};}, id:'' }); }, set:function(){ return Promise.resolve(); }, update:function(){ return Promise.resolve(); }, onSnapshot:function(){ return noOp; } }; }
           function stubCol(){ return { doc:function(){ return stubDoc(); }, where:function(){ return stubCol(); }, orderBy:function(){ return stubCol(); }, limit:function(){ return stubCol(); }, get:function(){ return Promise.resolve({ empty:true, forEach:noOp, docs:[] }); }, onSnapshot:function(){ return noOp; } }; }
           var stubDb = { collection:function(){ return stubCol(); }, doc:function(){ return stubDoc(); } };
-          // keep originals if needed
           try{ window.__ORIG_FIREBASE__ = { auth: firebase.auth, firestore: firebase.firestore }; }catch(_){ }
           firebase.firestore = function(){ return stubDb; };
         }catch(_){ }

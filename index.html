@@ -634,8 +634,7 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
         var cards = Array.prototype.slice.call(document.querySelectorAll('a.card, .card[href]'));
         if (!cards.length) return;
         cards.forEach(prepCard);
-        if (window.__SKIP_FIREBASE__){
-          var cached = readStatesCache(true);
+        if (window.__SKIP_FIREBASE__){ try{ cards.forEach(function(card){ try{ card.removeAttribute('href'); card.classList.add('pending-state'); }catch(_){ } }); }catch(_){ } var cached = readStatesCache(true);
           if (cached){ cards.forEach(function(card){ var name=getPageNameFromCard(card); var s=(name && cached.hasOwnProperty(name))? cached[name] : 'on'; applyCardState(card,s); }); }
           return;
         }
@@ -1028,6 +1027,7 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
   
 </body>
 </html>
+
 
 
 
