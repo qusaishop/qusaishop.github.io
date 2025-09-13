@@ -428,10 +428,17 @@ submitBtn.addEventListener('click', () => {
   db.collection('users').doc(user.uid).get().then(doc => {
     const userName = doc.exists ? doc.data().username : 'مستخدم';
 
-    const review = {
-      rating: selectedRating,
+    // حفظ كل تفاصيل التقييم داخل JSON واحد فقط
+    const now = Date.now();
+    const payloadObj = {
+      rating: Number(selectedRating)||0,
       comment: reviewText.value.trim(),
       userName: userName,
+      createdAtMillis: now,
+      createdAtISO: new Date(now).toISOString()
+    };
+    const toSave = {
+      payload: JSON.stringify(payloadObj),
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
@@ -444,7 +451,7 @@ submitBtn.addEventListener('click', () => {
     submitBtn.disabled = true;
     submitBtn.textContent = 'جارٍ الإرسال...';
 
-    reviewRef.set(review)
+    reviewRef.set(toSave)
       .then(() => {
         reviewText.value = '';
         selectedRating = 0;
@@ -515,7 +522,7 @@ function renderReviews() {
 
   const filteredReviews = currentFilter === 0
     ? reviewsData
-    : reviewsData.filter(review => review.rating === currentFilter);
+    : reviewsData.filter(review => Number(review.rating) === Number(currentFilter));
 
   if (filteredReviews.length === 0) {
     reviewsList.innerHTML = `<p>لا توجد تعليقات مع التقييم المحدد.</p>`;
@@ -525,7 +532,8 @@ function renderReviews() {
   filteredReviews.forEach(data => {
     const starsHTML = getStarsHTML(data.rating);
     const comment = data.comment || '';
-    const date = data.createdAt ? data.createdAt.toDate().toLocaleString('ar-EG') : '';
+    const d = data.createdAtMillis ? new Date(data.createdAtMillis) : (data.createdAtISO ? new Date(data.createdAtISO) : null);
+    const date = (d && !isNaN(d)) ? d.toLocaleString('ar-EG') : '';
     const userName = data.userName || 'مستخدم';
     const reviewCode = data.id ? data.id.substring(0, 8) : '';
 
@@ -536,7 +544,7 @@ function renderReviews() {
       ${reviewCode ? `<div class="review-code">كود التقييم: ${reviewCode}</div>` : ''}
       <div class="review-stars" aria-label="التقييم: ${data.rating} نجوم">${starsHTML}</div>
       <p class="review-text">${escapeHTML(comment)}</p>
-      <time class="review-date" datetime="${data.createdAt ? data.createdAt.toDate().toISOString() : ''}">${date}</time>
+      <time class="review-date" datetime="${(d && !isNaN(d)) ? d.toISOString() : ''}">${date}</time>
     `;
 
     reviewsList.appendChild(reviewItem);
@@ -548,7 +556,8 @@ function updateRatingCounts() {
   const counts = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
 
   reviewsData.forEach(review => {
-    counts[review.rating]++;
+    const r = Number(review.rating) || 0;
+    if (counts[r] != null) counts[r]++;
   });
 
   for (let i = 1; i <= 5; i++) {
@@ -609,11 +618,22 @@ function loadReviews() {
       }
 
       snapshot.forEach(doc => {
-        const data = doc.data();
-        data.id = doc.id;
-        reviewsData.push(data);
+        const raw = doc.data();
+        const parsed = (typeof raw.payload === 'string') ? parsePayloadSafe(raw.payload) : null;
+        if (!parsed || typeof parsed !== 'object') return; // اقرأ فقط JSON كامل
+        const createdAtMillis = Number(parsed.createdAtMillis || Date.parse(parsed.createdAtISO) || 0);
+        const item = {
+          id: doc.id,
+          rating: Number(parsed.rating) || 0,
+          comment: String(parsed.comment || ''),
+          userName: String(parsed.userName || 'مستخدم'),
+          createdAtMillis,
+          createdAtISO: parsed.createdAtISO || (createdAtMillis ? new Date(createdAtMillis).toISOString() : '')
+        };
+        reviewsData.push(item);
       });
 
+      try { reviewsData.sort((a,b) => (b.createdAtMillis||0) - (a.createdAtMillis||0)); } catch(_){}
       updateRatingCounts();
       renderReviews();
     })
@@ -632,6 +652,28 @@ function getStarsHTML(rating) {
       : `<i class="fa-regular fa-star"></i>`;
   }
   return html;
+}
+
+// تحويل createdAt إلى كائن Date سواء كان Timestamp من Firestore أو millis/ISO من JSON
+function toDateAny(val){
+  try{
+    if(!val) return null;
+    if (typeof val.toDate === 'function') return val.toDate();
+    if (typeof val === 'number') { const d=new Date(val); return isNaN(d)?null:d; }
+    if (typeof val === 'string') { const d=new Date(val); return isNaN(d)?null:d; }
+    return null;
+  }catch(_){ return null; }
+}
+
+// فك JSON بأمان مع دعم صيغة مفصولة بفواصل منقوطة (;)
+function parsePayloadSafe(s){
+  if (typeof s !== 'string') return null;
+  try { return JSON.parse(s); } catch(e){}
+  try {
+    let fixed = s.replace(/;/g, ',');
+    fixed = fixed.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+    return JSON.parse(fixed);
+  } catch(e2){ return null; }
 }
 
 // حماية من XSS

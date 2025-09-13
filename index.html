@@ -58,6 +58,7 @@
   <link rel="preload" as="image" href="https://i.ibb.co/Vcq1dr69/1756157590278.jpg">
   <link rel="preload" as="image" href="https://i.ibb.co/XZHyMGSG/1756247096045.jpg">
   <link rel="preload" as="image" href="https://i.ibb.co/cXQ1mG6y/prod-68632f4bac1c0-1.jpg">
+  <link rel="preload" as="image" href="https://i.ibb.co/TBh1qpzV/1757616222968.jpg">
 
   <!-- تحسين الاتصال بالمصادر -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -90,6 +91,12 @@
     html[data-theme="light"] { background: linear-gradient(135deg,#f7fbff,#e6f6ff); color:#333; }
     html, body { margin:0; padding:0; }
     body { background: inherit; color: inherit; }
+  </style>
+  
+  <!-- بانر علوي: تنسيق بسيط -->
+  <style>
+    .page-hero{ max-width:1000px; margin:10px auto 12px; padding:0 }
+    .page-hero img{ width:100%; height:auto; display:block; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,.12) }
   </style>
 
   <!-- Theme tokens -->
@@ -130,7 +137,7 @@ body{font-family:'Cairo',sans-serif;margin:0;direction:rtl}
 
 /* Search */
   /* تقليل الفراغ فوق شريط البحث */
-  .search-container{margin:10px auto 12px;max-width:600px;display:flex;justify-content:center;gap:10px;padding:0 15px}
+  .search-container{margin:10px auto 12px;max-width:1000px;display:flex;justify-content:center;gap:10px;padding:0}
 .search-container input[type="text"]{flex:1;padding:12px 15px;background:var(--input-bg);color:var(--input-text);border:2px solid var(--input-border);border-radius:25px;font-size:1rem;outline:none;transition:.3s}
 .search-container input[type="text"]:focus{box-shadow:0 0 6px var(--input-focus-glow);border-color:var(--input-border-focus)}
 .search-container button{background:var(--btn-bg);border:none;padding:12px 20px;border-radius:25px;color:var(--btn-text);font-size:1rem;cursor:pointer;transition:.3s}
@@ -206,11 +213,12 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
   <!-- توافق شريط الإشعار + البحث للهواتف -->
   <style>
     @media (max-width: 600px){
-      .notice-ticker{ margin:6px 8px; padding:8px 10px; border-radius:10px; --fadeWidth: 28px }
       /* تقليل المسافة داخل النسخة الواحدة بدلًا من إضافة فجوة بين النسختين */
       .notice-ticker .ticker-copy{ gap:24px }
-      .notice-ticker span{ font-size:.95rem }
+      .notice-ticker span{ font-size:1rem }
       .search-container{ margin:8px 8px 10px; padding:0 10px }
+      .page-hero{ margin:8px 8px 10px; padding:0 }
+      .page-hero img{ border-radius:10px }
       .search-container input[type="text"]{ font-size:1rem; padding:10px 12px }
       .search-container button{ padding:10px 16px }
     }
@@ -301,24 +309,28 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
     .notice-ticker {
       max-width: 1000px;
       margin: 12px auto 10px;
-      background: #e5e7eb;
-      --nt-bg: #e5e7eb; /* لون الخلفية لاستخدامه في التلاشي */
+      background: var(--input-bg);
+      --nt-bg: var(--input-bg); /* للتلاشي الجانبي */
       --fadeWidth: 40px; /* عرض طبقة التلاشي على الأطراف (سطح المكتب) */
-      color: var(--text);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 10px 14px;
+      color: var(--input-text);
+      border: 2px solid var(--input-border);
+      border-radius: 25px; /* مثل حقل البحث */
+      padding: 12px 15px; /* مثل حقل البحث */
+      font-size: 1rem; /* مطابق لحقل البحث */
+      line-height: 1.2;
+      display: flex;
+      align-items: center;
       overflow: hidden;
       box-shadow: 0 6px 14px rgba(0,0,0,.06);
       position: relative;
       direction: rtl; /* بداية السطر من اليمين */
     }
     html[data-theme="dark"] .notice-ticker {
-      background: #111827;
-      --nt-bg: #111827;
-      border-color: #334155;
+      background: var(--input-bg);
+      --nt-bg: var(--input-bg);
+      border-color: var(--input-border);
       box-shadow: 0 8px 20px rgba(0,0,0,.35);
-      color: #e6edf3;
+      color: var(--input-text);
     }
     /* تلاشي الأطراف لإخفاء أي حواف بداية/نهاية */
     .notice-ticker::before,
@@ -349,7 +361,7 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
     }
     /* استخدم نسخة مرئية واحدة فقط ليتحقق الاختفاء التام بين الدورات */
     .notice-ticker .ticker-copy[aria-hidden="true"]{ display: none !important; }
-    .notice-ticker span { font-weight: 700; }
+    .notice-ticker span { font-weight: 700; font-size: 1rem; }
     /* عدم إيقاف الحركة عند التحويم/التحديد */
     .notice-ticker .ticker-track:hover { animation-play-state: running; }
     @media (prefers-reduced-motion: reduce){
@@ -367,6 +379,21 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
       #homeTicker { --dir: -1 !important; }
     }
     
+    /* Mobile override to fully match search bar */
+    @media (max-width: 600px){
+      #homeTicker.notice-ticker{
+        margin:8px 8px 10px;
+        padding:10px 12px;
+        border-radius:25px;
+        border:2px solid var(--input-border);
+        background: var(--input-bg);
+        color: var(--input-text);
+        font-size:1rem;
+        line-height:1.2;
+        --fadeWidth: 28px;
+      }
+      #homeTicker.notice-ticker span{ font-size:1rem }
+    }
     @keyframes marquee-single {
       0%   { transform: translate3d(var(--start, 100%), 0, 0); }
       5%   { transform: translate3d(var(--start, 100%), 0, 0); }
@@ -384,6 +411,10 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
 
 <div style="height:70px;"></div>
 
+    <div class="page-hero">
+      <img src="https://i.ibb.co/TBh1qpzV/1757616222968.jpg" alt="بانر ترحيبي" loading="eager" decoding="async" fetchpriority="high">
+    </div>
+
   <!-- شريط الإشعار: يبدأ من البداية، يخرج تمامًا، ثم يعاود من البداية -->
   <div class="notice-ticker" id="homeTicker" aria-label="إعلانات الموقع">
     <div class="ticker-track" role="marquee" aria-live="polite">
@@ -397,11 +428,12 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
       </div>
     </div>
   </div>
+  
+
 
     <!-- البحث -->
   <div class="search-container">
     <input type="text" id="searchInput" placeholder="ابحث عن الخدمات أو التصنيفات..." aria-label="بحث" />
-    <button id="searchButton" aria-label="زر البحث"><i class="fas fa-search"></i></button>
   </div>
 
   <script>
@@ -761,10 +793,9 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
 
       // البحث + الفلترة
       const input = document.getElementById('searchInput');
-      const btn = document.getElementById('searchButton');
       const grid = document.getElementById('categoriesContainer');
       const noResults = document.getElementById('noResults');
-      if(!input || !btn || !grid) return;
+      if(!input || !grid) return;
 
       const norm = s => (s||'').toString().toLowerCase()
         .replace(/[ًٌٍَُِّْـ]/g,'')
@@ -792,7 +823,7 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
       if (saved) input.value = saved;
       apply(saved);
 
-      btn.addEventListener('click', () => { localStorage.setItem(KEY, input.value); apply(input.value); });
+      // الزر محذوف؛ نعتمد على Enter وتحديث حي
       input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') { e.preventDefault(); localStorage.setItem(KEY, input.value); apply(input.value); }
       });

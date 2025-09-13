@@ -72,6 +72,8 @@
 
   <!-- تحميل مسبق لصورة العروض المتكررة -->
   <link rel="preload" as="image" href="https://i.ibb.co/m5HLhf1n/1756802404151-1.jpg">
+  <!-- تحميل مسبق لصورة البانر أعلى العنوان -->
+  <link rel="preload" as="image" href="https://i.ibb.co/TBh1qpzV/1757616222968.jpg">
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -182,9 +184,13 @@
     .voucher .sep{ unicode-bidi: isolate; display:inline-block; padding: 0 .15rem; }
     .voucher .price{ white-space: nowrap; }
 
+    /* بانر أعلى الصفحة */
+    .page-hero{ max-width:1100px; margin:10px auto 16px; padding:0 10px }
+    .page-hero img{ width:100%; height:auto; display:block; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,.12) }
+
     /* شريط البحث + شبكة الكروت (مطابقة لطابع freefireinbut) */
     .search-container {
-      max-width: 600px;
+      max-width: 1100px;
       margin: 0 auto 24px auto;
       display: flex;
       justify-content: center;
@@ -795,8 +801,8 @@ html[data-theme="dark"] #myOffersContainer .offer-box.card.auto{
 
   const membershipOffersGrid = document.createElement("div");
   const membershipOffers = [
-    { offer: "عضوية أسبوعية", imgSrc: "https://i.ibb.co/sJsqbdfL/weekly.png", imgAlt: "عضوية أسبوعية" },
-    { offer: "عضوية شهرية", imgSrc: "https://i.ibb.co/6cR4j9xc/monthly.png", imgAlt: "عضوية شهرية" },
+    { offer: "عضوية أسبوعية", imgSrc: "https://i.ibb.co/VWGq79Y5/1757707642875.jpg", imgAlt: "عضوية أسبوعية" },
+    { offer: "عضوية شهرية", imgSrc: "https://i.ibb.co/67SLw1gp/1757707338685.jpg", imgAlt: "عضوية شهرية" },
     { offer: "البويا باس", imgSrc: "https://i.ibb.co/nNNqHg9g/booyah.png", imgAlt: "البويا باس" }
   ];
 
@@ -1202,8 +1208,5 @@ window.addEventListener('DOMContentLoaded', () => {
   
 </body>
 </html>
-
-
-
 
 

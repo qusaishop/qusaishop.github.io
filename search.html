@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
@@ -47,102 +47,36 @@
     <h1 style="margin:6px 0 10px 0;font-size:1.35rem">بحث في جميع صفحات الموقع</h1>
     <div class="search-container">
       <input id="globalSearchInput" type="text" placeholder="اكتب اسم اللعبة، الخدمة أو الصفحة..." aria-label="بحث شامل" />
-      <button id="globalSearchBtn" aria-label="ابحث"><i class="fa-solid fa-magnifying-glass"></i></button>
     </div>
     <section id="results" class="results"></section>
     <p id="noRes" class="no-results" style="display:none">لا توجد نتائج مطابقة.</p>
   </main>
 
-  <script defer src="header.js"></script>
+  <!-- Firebase SDK for header.js -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
   <script>
-    // ثيم مبكّر
+    // Initialize Firebase once for header/sidebar balance and auth in header.js
     (function(){
       try{
-        var t = localStorage.getItem('theme') || 'dark';
-        document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
-        if (t==='dark') document.body.classList.add('dark-mode');
+        var cfg = {
+          apiKey: "AIzaSyB6dC1UAS0-ilt-dj9UpcLIPljwbI3FCZs",
+          authDomain: "qusaystore-ec327.firebaseapp.com",
+          projectId: "qusaystore-ec327",
+          storageBucket: "qusaystore-ec327.firebasestorage.app",
+          messagingSenderId: "701743074708",
+          appId: "1:701743074708:web:defc2de594567b6624d381",
+          measurementId: "G-00R4XQCB1V"
+        };
+        if (window.firebase && (!firebase.apps || !firebase.apps.length)) {
+          firebase.initializeApp(cfg);
+        }
       }catch(_){ }
     })();
-
-    // فهرس الصفحات (ثابت بدون خادم)
-    const PAGES = [
-      { path:'index.html',        title:'الرئيسية',        icon:'fa-house',          tags:'رئيسية متجر عروض أقسام' },
-      { path:'games.html',        title:'كل الألعاب',      icon:'fa-gamepad',        tags:'العاب ألعاب شحن game games' },
-      { path:'weplay.html',       title:'ويبلاي',          icon:'fa-gamepad',        tags:'weplay وي بلي ذهب vip عضوية' },
-      { path:'freefire.html',     title:'فري فاير',        icon:'fa-fire',           tags:'free fire فري فاير شحن جواهر membership' },
-      { path:'freefireauto.html', title:'فري فاير (تلقائي)',icon:'fa-fire',           tags:'free fire auto تلقائي' },
-      { path:'freefiremembership.html', title:'عضويات فري فاير', icon:'fa-id-card',   tags:'free fire vip عضوية' },
-      { path:'freefireinbut.html', title:'شحن فري فاير يدوي', icon:'fa-fire',        tags:'free fire manual يدوي' },
-      { path:'freefireN.html',    title:'فري فاير (N)',    icon:'fa-fire',           tags:'free fire' },
-      { path:'pubg.html',         title:'ببجي',            icon:'fa-bullseye',       tags:'pubg ببجي uc شدات' },
-      { path:'bloodstrike.html',  title:'Blood Strike',    icon:'fa-crosshairs',     tags:'بلود سترايك blood strike' },
-      { path:'jawaker.html',      title:'جواكر',           icon:'fa-diamond',        tags:'jawaker جواكر' },
-      { path:'yala.html',         title:'يلا لودو',        icon:'fa-dice',           tags:'yalla ludo يلا' },
-      { path:'8ball.html',        title:'8 Ball Pool',     icon:'fa-circle',         tags:'8ball 8 بول بلياردو' },
-      { path:'mobailleg.html',    title:'موبايل ليج',      icon:'fa-shield',         tags:'mobile legends موبايل ليج ل diamonds' },
-      { path:'instainbut.html',   title:'خدمات انستغرام',  icon:'fa-instagram',      tags:'instagram متابعين سوشيال' },
-      { path:'social.html',       title:'السوشيال',        icon:'fa-users',          tags:'سوشيال تيك توك انستغرام يوتيوب' },
-      { path:'software.html',     title:'اشتراكات البرامج', icon:'fa-code',           tags:'برامج اكواد كروت software' },
-      { path:'wallet.html',       title:'محفظتي',          icon:'fa-wallet',         tags:'محفظه رصيد حسابي' },
-      { path:'edaa.html',         title:'الإيداع',         icon:'fa-coins',          tags:'ايداع شحن الرصيد تحويل دفع' },
-      { path:'talabat.html',      title:'طلباتي',          icon:'fa-list',           tags:'طلباتي تتبع طلب order orders' },
-      { path:'settings.html',     title:'الإعدادات',        icon:'fa-cog',            tags:'اعدادات الحساب' },
-      { path:'login.html',        title:'تسجيل الدخول',     icon:'fa-right-to-bracket', tags:'تسجيل دخول' },
-      { path:'Reviews.html',      title:'التقييمات',        icon:'fa-star',           tags:'تقييمات اراء' },
-      { path:'terms.html',        title:'الشروط والأحكام',  icon:'fa-file-lines',     tags:'الشروط السياسه' }
-    ];
-
-    // تطبيع عربي + إنجليزي
-    function norm(s){
-      return (s||'').toString().toLowerCase()
-        .replace(/[ًٌٍَُِّْـ]/g,'')
-        .replace(/[إأآا]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه')
-        .replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim();
-    }
-
-    function render(list){
-      const wrap = document.getElementById('results');
-      const noRes = document.getElementById('noRes');
-      wrap.innerHTML = '';
-      if (!list.length){ noRes.style.display='block'; return; }
-      noRes.style.display = 'none';
-      list.forEach(item => {
-        const a = document.createElement('a');
-        a.href = item.path + '?allow=1';
-        a.className = 'result-card';
-        a.innerHTML = `
-          <i class="fa-solid ${item.icon}" aria-hidden="true"></i>
-          <div>
-            <p class="result-title">${item.title}</p>
-            <p class="result-desc">${item.desc || item.path}</p>
-          </div>
-        `;
-        a.addEventListener('click', ()=>{ try{ sessionStorage.setItem('nav:fromHome','1'); }catch(_){ } });
-        wrap.appendChild(a);
-      });
-    }
-
-    function search(q){
-      const nq = norm(q);
-      if (!nq){ render(PAGES); return; }
-      const terms = nq.split(' ');
-      const list = PAGES.filter(p => {
-        const hay = norm(p.title + ' ' + (p.tags||'') + ' ' + (p.path||''));
-        return terms.every(t => hay.includes(t));
-      });
-      render(list);
-    }
-
-    // تهيئة
-    window.addEventListener('DOMContentLoaded', () => {
-      render(PAGES);
-      const input = document.getElementById('globalSearchInput');
-      const btn = document.getElementById('globalSearchBtn');
-      const go = ()=> search(input.value);
-      btn.addEventListener('click', go);
-      input.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); go(); }});
-      let t; input.addEventListener('input', ()=>{ clearTimeout(t); t=setTimeout(go, 150); });
-    });
   </script>
+
+  <script defer src="header.js"></script>
 </body>
 </html>

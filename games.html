@@ -127,7 +127,7 @@
   html[data-theme="light"] body{background:var(--bg-app, var(--bg));color:var(--text)}
 
 /* Search */
-.search-container{margin:80px auto 20px;max-width:600px;display:flex;justify-content:center;gap:10px;padding:0 15px}
+.search-container{margin:80px auto 20px;max-width:1000px;display:flex;justify-content:center;gap:10px;padding:0}
 .search-container input[type="text"]{flex:1;padding:12px 15px;background:var(--input-bg);color:var(--input-text);border:2px solid var(--input-border);border-radius:25px;font-size:1rem;outline:none;transition:.3s}
 .search-container input[type="text"]:focus{box-shadow:0 0 6px var(--input-focus-glow);border-color:var(--input-border-focus)}
 .search-container button{background:var(--btn-bg);border:none;padding:12px 20px;border-radius:25px;color:var(--btn-text);font-size:1rem;cursor:pointer;transition:background-color var(--anim-med) var(--ease-soft), transform var(--anim-fast) var(--ease-snappy)}
@@ -306,7 +306,6 @@ a.card.auto:not(.pending-state):not(.maintenance)::after{
   <!-- البحث -->
   <div class="search-container">
     <input type="text" id="searchInput" placeholder="ابحث عن الخدمات أو التصنيفات..." aria-label="بحث" />
-    <button id="searchButton" aria-label="زر البحث"><i class="fas fa-search"></i></button>
   </div>
 
   <main>
@@ -643,10 +642,9 @@ a.card.auto:not(.pending-state):not(.maintenance)::after{
 
       // البحث + الفلترة
       const input = document.getElementById('searchInput');
-      const btn = document.getElementById('searchButton');
       const grid = document.getElementById('categoriesContainer');
       const noResults = document.getElementById('noResults');
-      if(!input || !btn || !grid) return;
+      if(!input || !grid) return;
 
       const norm = s => (s||'').toString().toLowerCase()
         .replace(/[ًٌٍَُِّْـ]/g,'')
@@ -674,7 +672,7 @@ a.card.auto:not(.pending-state):not(.maintenance)::after{
       if (saved) input.value = saved;
       apply(saved);
 
-      btn.addEventListener('click', () => { localStorage.setItem(KEY, input.value); apply(input.value); });
+      // الزر محذوف؛ نعتمد على Enter وتحديث حي
       input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') { e.preventDefault(); localStorage.setItem(KEY, input.value); apply(input.value); }
       });

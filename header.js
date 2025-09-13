@@ -181,6 +181,8 @@ leftContainer.style.gap = "10px"; // ✅ مسافة بين الرصيد واله
 leftContainer.appendChild(hamburger);
 leftContainer.appendChild(balanceSpan);
 
+
+
 // ضعه في أقصى يسار الهيدر
 header.appendChild(logoLink); // الشعار (كرابط) في أقصى اليمين
 header.appendChild(leftContainer); // الهامبرغر والرصيد في اليسار
@@ -720,3 +722,4 @@ document.addEventListener('pointerdown', function(e){
 })();
 
 // (تمت إزالة حارس الحالات الجديد وإرجاع سلوك الإغلاق القديم المعتمد على Firestore في الصفحات)
+

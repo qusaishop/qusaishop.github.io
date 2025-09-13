@@ -1,4 +1,4 @@
-
+﻿
 body {
   font-family: 'Cairo', sans-serif;
   direction: rtl;
@@ -81,6 +81,7 @@ padding-left: 45px;
   z-index: 1800;
 }
 
+
     .top-header img {
       height: 60px;
       margin-left: auto; /* لدفع الصورة إلى أقصى اليمين */
@@ -111,7 +112,9 @@ padding-left: 45px;
       background: #e0e0e0;
     }
 
-    /* القائمة الجانبية */
+
+/* وضع فاتح للهيدر والأزرار */
+/* القائمة الجانبية */
     #sidebar {
       text-align: center;
       position: fixed;
@@ -1136,4 +1139,5 @@ html[data-theme="dark"], body.dark-mode { --ripple-color: rgba(125, 211, 252, 0.
 @keyframes ripple-anim {
   to { transform: scale(3); opacity: 0; }
 }
+
 

@@ -7,6 +7,9 @@
   <link rel="icon" href="https://i.ibb.co/zHC1tQ8b/1757362837638.png" type="image/png">
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Icons + Shared header styles -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="header.css">
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
   <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet" />
   <!-- Loader assets -->
@@ -20,6 +23,9 @@
 </head>
 <body class="bg-white text-gray-800 leading-relaxed">
   <div id="preloader"><div class="loader"></div></div>
+  <!-- Global header + sidebar containers -->
+  <div id="headerContainer"></div>
+  <div id="sidebarContainer"></div>
   <div class="max-w-6xl mx-auto p-6">
     <header class="text-center mb-16">
       <h1 class="text-4xl font-bold text-sky-600 border-b-4 border-sky-300 inline-block pb-2" data-aos="fade-down">القوانين وسياسة الخصوصية</h1>
@@ -102,6 +108,29 @@
       &copy; 2025 جميع الحقوق محفوظة لموقعنا.
     </footer>
   </div>
+  <!-- Firebase SDK for header.js (auth/balance/menus) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script>
+    (function(){
+      try{
+        var cfg = {
+          apiKey: "AIzaSyB6dC1UAS0-ilt-dj9UpcLIPljwbI3FCZs",
+          authDomain: "qusaystore-ec327.firebaseapp.com",
+          projectId: "qusaystore-ec327",
+          storageBucket: "qusaystore-ec327.firebasestorage.app",
+          messagingSenderId: "701743074708",
+          appId: "1:701743074708:web:defc2de594567b6624d381",
+          measurementId: "G-00R4XQCB1V"
+        };
+        if (window.firebase && (!firebase.apps || !firebase.apps.length)) {
+          firebase.initializeApp(cfg);
+        }
+      }catch(_){ }
+    })();
+  </script>
+  <script src="header.js" defer></script>
   <script>
     AOS.init({
       duration: 300,

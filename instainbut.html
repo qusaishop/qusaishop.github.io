@@ -315,7 +315,6 @@ a.card.auto:not(.pending-state):not(.maintenance)::after{
   <!-- البحث -->
   <div class="search-container">
     <input type="text" id="searchInput" placeholder="ابحث عن الخدمات أو التصنيفات..." aria-label="بحث" />
-    <button id="searchButton" aria-label="زر البحث"><i class="fas fa-search"></i></button>
   </div>
 
   <main>
@@ -640,10 +639,10 @@ a.card.auto:not(.pending-state):not(.maintenance)::after{
 
       // البحث + الفلترة
       const input = document.getElementById('searchInput');
-      const btn = document.getElementById('searchButton');
+      // الزر محذوف؛ نكتفي بالإدخال وEnter
       const grid = document.getElementById('categoriesContainer');
       const noResults = document.getElementById('noResults');
-      if(!input || !btn || !grid) return;
+      if(!input || !grid) return;
 
       const norm = s => (s||'').toString().toLowerCase()
         .replace(/[ًٌٍَُِّْـ]/g,'')
@@ -671,7 +670,7 @@ a.card.auto:not(.pending-state):not(.maintenance)::after{
       if (saved) input.value = saved;
       apply(saved);
 
-      btn.addEventListener('click', () => { localStorage.setItem(KEY, input.value); apply(input.value); });
+      // زر البحث محذوف
       input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') { e.preventDefault(); localStorage.setItem(KEY, input.value); apply(input.value); }
       });

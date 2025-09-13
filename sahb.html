@@ -96,7 +96,6 @@
 
     <div class="search-container">
       <input type="text" id="searchInput" placeholder="ابحث داخل القائمة الحالية." aria-label="بحث"/>
-      <button id="searchButton" aria-label="زر البحث"><i class="fas fa-search"></i></button>
     </div>
 
     <section class="categories" id="grid"></section>
@@ -191,7 +190,6 @@ const WORKER_BASE = "https://edaaandsahb.qusaistore3.workers.dev";
     // ================= عناصر DOM =================
     const grid = document.getElementById('grid');
     const searchInput = document.getElementById('searchInput');
-    const searchButton = document.getElementById('searchButton');
     const noResults = document.getElementById('noResults');
     const backBtn = document.getElementById('backBtn');
     const whereText = document.getElementById('whereText');
@@ -258,7 +256,6 @@ const WORKER_BASE = "https://edaaandsahb.qusaistore3.workers.dev";
       currentCountry?renderMethods(filtered):renderCountries(filtered);
     }
     searchInput.addEventListener('input', applySearch);
-    searchButton.addEventListener('click', applySearch);
 
     // ================= Firestore: الدول والطرق =================
     function watchCountries(){
