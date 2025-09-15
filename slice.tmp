@@ -1,0 +1,250 @@
+      word-break: break-word;
+    }
+    .offer-box.card img, .card img {
+      width: 100%;
+      aspect-ratio: 1/1;
+      height: auto;
+      object-fit: cover;
+      object-position: center;
+      border-radius: 8px;
+      user-select: none;
+      background-color: var(--skeleton);
+      display: block;
+      margin: 0 auto;
+    }
+    /* سعر البطاقة أسفل الاسم */
+/* السعر دائماً أبيض مع خلفية زرقاء خفيفة */
+/* السعر صغير وواضح */
+.offer-box .offer-price {
+  font-size: 0.92em;
+  font-weight: bold;
+  color: #fff !important;
+  margin: 0;
+  letter-spacing: 0.5px;
+  background: #0077cc;
+  border-radius: 7px;
+  padding: 0;
+  width: 100%;
+  display: block;
+}
+body.dark-mode .offer-box .offer-price {
+  color: #fff !important;
+  background: #0369a1;
+}
+    @media (max-width: 992px) {
+      .categories {
+        grid-template-columns: repeat(3, minmax(140px, 1fr));
+        gap: 12px;
+      }
+      .offer-box.card, .card {
+        max-width: 160px;
+        padding: 12px !important;
+      }
+      .offer-box.card h2, .card h2 {
+        font-size: .9rem !important;
+      }
+    }
+    @media (max-width: 480px) {
+      .categories {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 6px !important;
+      }
+      .offer-box.card, .card {
+        max-width: 120px;
+        padding: 6px !important;
+      }
+      .offer-box.card h2, .card h2 {
+        font-size: .80rem !important;
+      }
+    }
+    .offer-box.card{background:#fff;color:#111;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.1);text-align:center;padding:16px;text-decoration:none;transition:transform .3s ease,box-shadow .3s ease;display:flex;flex-direction:column;gap:12px}
+    /* منع صعود البطاقة حتى لا تتداخل مع الصف الذي فوقها */
+    .offer-box.card:hover{transform:none;box-shadow:0 8px 20px rgba(0,0,0,.15)}
+    .offer-box.card h2{font-weight:700;font-size:1rem;margin:0;line-height:1.4;word-break:break-word}
+    .offer-box.card .caption{margin-top:8px; line-height:1.35}
+    .offer-box.card .caption .gold{display:block; color:#475569; font-weight:700}
+    .offer-box.card .caption .price{display:block; color:#0f172a; font-weight:800}
+    .offer-box.card img{width:100%;aspect-ratio:1/1;height:auto;object-fit:cover;object-position:center;border-radius:8px;user-select:none;background-color:#f0f0f0;display:block;margin:0 auto}
+
+    /* رسالة لا نتائج مثل الرئيسية */
+    .no-results{ text-align:center; font-size:1.2rem; color:#888; margin-top:30px }
+    body.dark-mode .no-results{ color:#94a3b8 }
+
+    /* وضع داكن */
+    body.dark-mode .search-container input[type="text"]{background:#0b1220;color:#e6edf3;border-color:#334155}
+    body.dark-mode .search-container button{background:#475569}
+    body.dark-mode .search-container button:hover{background:#64748b}
+    body.dark-mode .offer-box.card{background:#101826;color:#e6edf3;border-color:#334155;box-shadow:0 2px 10px rgba(0,0,0,.35)}
+    body.dark-mode .offer-box.card img{background:#162032}
+    body.dark-mode .offer-box.card .caption .gold{color:#cbd5e1}
+    body.dark-mode .offer-box.card .caption .price{color:#e6edf3}
+
+    /* البطاقات + تغطية "غير متوفر" */
+    .offer-box { position: relative; cursor: pointer; }
+    .offer-box.disabled { opacity: .4; cursor: not-allowed; }
+    /* شارة غير متوفر صغيرة وواضحة */
+    .offer-box .unavailable-badge{
+      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+      background:rgba(0,0,0,.35); color:#fff; font-weight:700; border-radius:12px;
+      font-size: 0.93em;
+      letter-spacing: 0.2px;
+    }
+
+/* ====== Dark Mode for Free Fire page ====== */
+body.dark-mode{ background:#0b1220; color:#e6edf3; }
+
+/* الصندوق الرئيسي */
+body.dark-mode .main-white-box{
+  background:#0f172a !important;
+  color:#e6edf3 !important;
+  border:1px solid #334155 !important;
+  box-shadow:0 8px 22px rgba(0,0,0,.35);
+}
+
+/* صندوق مُعرّف اللاعب */
+body.dark-mode .player-id-box{
+  background:#0f172a !important;
+  border-color:#334155 !important;
+  color:#e6edf3 !important;
+}
+body.dark-mode .player-id-box label{ color:#e6edf3 !important; }
+body.dark-mode .player-id-box input{
+  background:#0b1220 !important;
+  color:#e6edf3 !important;
+  border-color:#334155 !important;
+}
+
+/* صندوق المبلغ المختار */
+body.dark-mode #selected-amount-container{
+  background:#0f172a !important;
+  border-color:#334155 !important;
+  color:#ffffff !important;
+}
+body.dark-mode #selected-amount-container .voucher,
+body.dark-mode #selected-amount-container .voucher .line,
+body.dark-mode #selected-amount-container .voucher .price{
+  color:#ffffff !important;
+}
+
+/* بطاقات العروض */
+body.dark-mode .offer-box{
+  background:#101826 !important;
+  border:1px solid #334155 !important;
+  color:#e6edf3 !important;
+}
+body.dark-mode .offer-box span{ color:#e6edf3 !important; }
+body.dark-mode .offer-box.selected{ outline:2px solid #38bdf8; }
+    body.dark-mode .offer-box.disabled .unavailable-badge{ background:rgba(0,0,0,.45); }
+
+/* عناوين الأقسام */
+body.dark-mode .section-title{ color:#7dd3fc !important; }
+
+/* زر الشراء */
+body.dark-mode .send-button{
+  background:#0369a1 !important;
+  color:#e6edf3 !important;
+}
+body.dark-mode .send-button:hover{ background:#0ea5e9 !important; }
+
+/* التوست */
+body.dark-mode #toast{
+  background:#0f172a !important;
+  color:#e6edf3 !important;
+}
+
+/* النافذة المنبثقة (دليل المعرف) */
+body.dark-mode #popup > div{
+  background:#111827 !important;
+  color:#e6edf3 !important;
+}
+
+/* محاكاة شيمر أخفت في الوضع الداكن إن وُجد */
+body.dark-mode .offer-box.loading{ background:#162032 !important; }
+
+/* === اجعل خلفية قسم لماذا تختارنا مثل الخلفيات الأخرى === */
+
+/* وضع فاتح: لون مسطح مطابق لصناديق الصفحة */
+.footer-icons{
+  background: #f9f9f9 !important;  /* بديل للتدرّج */
+  border: 1px solid #e0e6f7;        /* نفس حدود الصناديق الفاتحة */
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+/* تباين عنوان القسم على الخلفية الفاتحة */
+.footer-title{
+  color: #0b1220 !important;
+}
+
+/* وضع داكن: لون مسطح مطابق لصناديق الوضع الداكن */
+body.dark-mode .footer-icons{
+  background: #0f265a !important;   /* بديل للتدرّج الداكن */
+  border-color: #334155;
+  box-shadow: 0 8px 22px rgba(0,0,0,0.35);
+}
+
+/* نص العنوان في الوضع الداكن */
+body.dark-mode .footer-title{
+  color: #e6edf3 !important;
+}
+
+
+    /* استجابة للجوال */
+    @media (max-width: 900px) {
+      .categories {
+        grid-template-columns: repeat(3, minmax(140px, 1fr)) !important;
+        gap: 12px !important;
+      }
+      .offer-box.card {
+        max-width: 160px;
+        padding: 12px !important;
+      }
+    }
+    /* أزل أي قواعد auto-fit للهواتف */
+
+  
+/* إزالة الأنماط التي كانت تُفرغ البطاقات والخلفيات لتطابق عرض index.html */
+/* Note: السماح بقواعد .card الافتراضية (خلفية، حد، ظل، ورفع عند التحويم) */
+/* 5 أعمدة ثابتة بدون تراكب (مطابقة الرئيسية) مع مسافة أفقية أكبر */
+/* تم استبدال جميع قواعد الأعمدة بقواعد جديدة أعلاه */
+
+/* حافظ على تأثير الرفع القياسي كالرئيسية */
+
+
+/* === نفس سلوك البطاقات كما في الرئيسية (الإبقاء على تأثير الرفع فقط) === */
+
+/* طبّق شكل البطاقة على عناصرك (.offer-box.card) لتطابق .card */
+#myOffersContainer .offer-box.card,
+.card{
+  background: var(--card-bg) !important;
+  color: var(--card-text) !important;
+  border: 1px solid var(--card-border) !important;
+  border-radius: 12px;
+  box-shadow: var(--elev-shadow);
+  text-align: center;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform .3s ease, box-shadow .3s ease;
+  position: relative;
+  z-index: 0;
+  overflow: hidden; /* يمنع بروز الصورة عند التحريك */
+}
+
+/* نفس الرفع على hover بدون أن تُغطّي بطاقة أخرى */
+#myOffersContainer .offer-box.card:hover,
+.card:hover{
+  transform: none; /* لا تتحرك البطاقة نفسها لتجنب التداخل العمودي */
+  box-shadow: 0 8px 20px rgba(0,0,0,.15);
+  z-index: 1;
+}
+
+/* الصورة: نفس السلوك */
+#myOffersContainer .offer-box.card img,
+.card img{
+  width: 100%;
+  aspect-ratio: 1/1;
+  height: auto;
+  object-fit: cover;
+  border-radius: 8px;
+  background-color: var(--skeleton);

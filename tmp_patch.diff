@@ -1,0 +1,175 @@
+*** Begin Patch
+*** Update File: order.js
+@@
+-async function getOrderDetails(orderId, FIRESTORE, accessToken) {
+-  const publicRes = await fetch(${FIRESTORE}/orders//public/main, {
+-    headers: { Authorization: Bearer  }
+-  });
+-  const privateRes = await fetch(${FIRESTORE}/orders//private/main, {
+-    headers: { Authorization: Bearer  }
+-  });
+-
+-  const publicData = await publicRes.json();
+-  const privateData = await privateRes.json();
+-
+-  if (!publicData.fields && !privateData.fields) {
+-    return ❌ الطلب \${orderId}\ غير موجود.;
+-  }
+-
+-  const title = publicData.fields?.title?.stringValue || "طلب جديد";
+-  const playerId = publicData.fields?.playerId?.stringValue || "غير متوفر";
+-  const offer = publicData.fields?.["العروض"]?.stringValue || "غير متوفر";
+-  const total = publicData.fields?.total?.doubleValue || publicData.fields?.total?.stringValue || "؟";
+-  const name = privateData.fields?.name?.stringValue || "غير معروف";
+-  const balanceBefore = Number(privateData.fields?.balanceBefore?.doubleValue ?? privateData.fields?.balanceBefore?.integerValue ?? 0);
+-  const balanceAfter = Number(privateData.fields?.balanceAfter?.doubleValue ?? privateData.fields?.balanceAfter?.integerValue ?? 0);
+-  const whatsapp = privateData.fields?.whatsapp?.stringValue || "غير متوفر";
+-  const whatsappLink = privateData.fields?.whatsappLink?.stringValue || https://wa.me/;
+-  const webuid = privateData.fields?.webuid?.stringValue || "؟";
+-  const statusRaw = publicData.fields?.status?.stringValue || "غير محددة";
+-  const statusHuman = typeof statusRaw === "string" ? statusRaw.replace(/_/g, " ") : "غير محددة";
+-  
+-  return 🔔 **\n\n\n📦 *الحالة:*   \n\n\u200F🆔 *كود الطلب:* \${orderId}\\n  \n🎮 *معرف اللاعب:* \${playerId}\\n  \n🎁 *العروض:*\n\n  \n👤 *الاسم:* \n  \n💰 *الرصيد:*  ← \n  \n🧾 *معرف العميل:* \${webuid}\\n  \n📱 *واتساب:* ;
+-}
++// ——— Helpers for new orders path (orders/<uid>/byCode.<key>) ———
++function orderKeyFromCode(orderCode) {
++  return String(orderCode || '').replace(/[^A-Za-z0-9_]/g, '_');
++}
++async function getOrderOwnerUid(FIRESTORE, accessToken, orderCode) {
++  try {
++    const res = await fetch(${FIRESTORE}/orderIndex/, { headers: { Authorization: Bearer  } });
++    if (!res.ok) return null;
++    const doc = await res.json();
++    return doc?.fields?.uid?.stringValue || null;
++  } catch { return null; }
++}
++async function fetchOrderEntry(FIRESTORE, accessToken, orderCode) {
++  const uid = await getOrderOwnerUid(FIRESTORE, accessToken, orderCode);
++  if (!uid) return { uid: null, entry: null };
++  const orderKey = orderKeyFromCode(orderCode);
++  const userDocUrl = ${FIRESTORE}/orders/;
++  const res = await fetch(userDocUrl, { headers: { Authorization: Bearer  } });
++  if (!res.ok) return { uid, entry: null };
++  const userDoc = await res.json();
++  const byCode = userDoc?.fields?.byCode?.mapValue?.fields || {};
++  const entry = byCode[orderKey]?.mapValue?.fields || null;
++  return { uid, entry };
++}
++
++async function getOrderDetails(orderId, FIRESTORE, accessToken) {
++  // حاول المسار الجديد أولاً
++  const { uid, entry } = await fetchOrderEntry(FIRESTORE, accessToken, orderId);
++  if (uid && entry) {
++    const pub = entry.public?.mapValue?.fields || {};
++    const priv = entry.private?.mapValue?.fields || {};
++    const title = pub.title?.stringValue || "طلب جديد";
++    const playerId = pub.playerId?.stringValue || "غير متوفر";
++    const offer = pub["العروض"]?.stringValue || "غير متوفر";
++    const total = pub.total?.doubleValue ?? pub.total?.stringValue ?? "؟";
++    const name = priv.name?.stringValue || "غير معروف";
++    const balanceBefore = Number(priv.balanceBefore?.doubleValue ?? priv.balanceBefore?.integerValue ?? 0);
++    const balanceAfter  = Number(priv.balanceAfter?.doubleValue  ?? priv.balanceAfter?.integerValue  ?? 0);
++    const whatsapp = priv.whatsapp?.stringValue || "غير متوفر";
++    const whatsappLink = priv.whatsappLink?.stringValue || https://wa.me/;
++    const webuid = priv.webuid?.stringValue || "؟";
++    const statusRaw = pub.status?.stringValue || "غير محددة";
++    const statusHuman = typeof statusRaw === "string" ? statusRaw.replace(/_/g, " ") : "غير محددة";
++
++    return 🔔 **\n\n\n📦 *الحالة:*   \n\n\u200F🆔 *كود الطلب:* \${orderId}\\n  \n🎮 *معرف اللاعب:* \${playerId}\\n  \n🎁 *العروض:*\n\n  \n👤 *الاسم:* \n  \n💰 *الرصيد:*  ← \n  \n🧾 *معرف العميل:* \${webuid}\\n  \n📱 *واتساب:* ;
++  }
++
++  // توافقيًا: المسار القديم
++  const publicRes = await fetch(${FIRESTORE}/orders//public/main, { headers: { Authorization: Bearer  } });
++  const privateRes = await fetch(${FIRESTORE}/orders//private/main, { headers: { Authorization: Bearer  } });
++  const publicData = await publicRes.json().catch(()=>({}));
++  const privateData = await privateRes.json().catch(()=>({}));
++  if (!publicData.fields && !privateData.fields) return ❌ الطلب \${orderId}\ غير موجود.;
++
++  const title = publicData.fields?.title?.stringValue || "طلب جديد";
++  const playerId = publicData.fields?.playerId?.stringValue || "غير متوفر";
++  const offer = publicData.fields?.["العروض"]?.stringValue || "غير متوفر";
++  const total = publicData.fields?.total?.doubleValue || publicData.fields?.total?.stringValue || "؟";
++  const name = privateData.fields?.name?.stringValue || "غير معروف";
++  const balanceBefore = Number(privateData.fields?.balanceBefore?.doubleValue ?? privateData.fields?.balanceBefore?.integerValue ?? 0);
++  const balanceAfter = Number(privateData.fields?.balanceAfter?.doubleValue ?? privateData.fields?.balanceAfter?.integerValue ?? 0);
++  const whatsapp = privateData.fields?.whatsapp?.stringValue || "غير متوفر";
++  const whatsappLink = privateData.fields?.whatsappLink?.stringValue || https://wa.me/;
++  const webuid = privateData.fields?.webuid?.stringValue || "؟";
++  const statusRaw = publicData.fields?.status?.stringValue || "غير محددة";
++  const statusHuman = typeof statusRaw === "string" ? statusRaw.replace(/_/g, " ") : "غير محددة";
++  return 🔔 **\n\n\n📦 *الحالة:*   \n\n\u200F🆔 *كود الطلب:* \${orderId}\\n  \n🎮 *معرف اللاعب:* \${playerId}\\n  \n🎁 *العروض:*\n\n  \n👤 *الاسم:* \n  \n💰 *الرصيد:*  ← \n  \n🧾 *معرف العميل:* \${webuid}\\n  \n📱 *واتساب:* ;
++}
+@@
+-async function computeRefundInfo(orderId, FIRESTORE, accessToken) {
+-  const [pubRes, privRes] = await Promise.all([
+-    fetch(${FIRESTORE}/orders//public/main, { headers: { Authorization: Bearer  } }),
+-    fetch(${FIRESTORE}/orders//private/main, { headers: { Authorization: Bearer  } }),
+-  ]);
+-
+-  if (!pubRes.ok || !privRes.ok) return { refundable: false };
+-
+-  const pub = await pubRes.json();
+-  const priv = await privRes.json();
+-
+-  const alreadyRefunded = !!priv?.fields?.refundIssued?.booleanValue;
+-  const webuid = priv?.fields?.webuid?.stringValue;
+-
+-  // المبلغ المفضّل: total من public
+-  let totalRaw = pub?.fields?.total?.doubleValue ?? pub?.fields?.total?.stringValue;
+-  let total = Number(totalRaw);
+-  if (!Number.isFinite(total)) total = NaN;
+-
+-  // احتياطيًا: فرق الرصيد
+-  const before = Number(priv?.fields?.balanceBefore?.doubleValue ?? priv?.fields?.balanceBefore?.integerValue ?? NaN);
+-  const after  = Number(priv?.fields?.balanceAfter?.doubleValue  ?? priv?.fields?.balanceAfter?.integerValue  ?? NaN);
+-  const diff = Number.isFinite(before) && Number.isFinite(after) ? Math.max(0, before - after) : NaN;
+-
+-  const refundAmount = Number.isFinite(total) ? total : (Number.isFinite(diff) ? diff : 0);
+-
+-  return {
+-    refundable: !!webuid && refundAmount > 0 && !alreadyRefunded,
+-    webuid: webuid || null,
+-    refundAmount,
+-    alreadyRefunded
+-  };
+-}
++async function computeRefundInfo(orderId, FIRESTORE, accessToken) {
++  // جرّب المسار الجديد أولاً
++  try {
++    const { entry } = await fetchOrderEntry(FIRESTORE, accessToken, orderId);
++    if (entry) {
++      const pub = entry.public?.mapValue?.fields || {};
++      const priv = entry.private?.mapValue?.fields || {};
++      const alreadyRefunded = priv.refunded?.booleanValue === true || priv.refundIssued?.booleanValue === true;
++      const webuid = priv.webuid?.stringValue;
++      let totalRaw = pub.total?.doubleValue ?? pub.total?.stringValue;
++      let total = Number(totalRaw);
++      if (!Number.isFinite(total)) total = NaN;
++      const before = Number(priv.balanceBefore?.doubleValue ?? priv.balanceBefore?.integerValue ?? NaN);
++      const after  = Number(priv.balanceAfter?.doubleValue  ?? priv.balanceAfter?.integerValue  ?? NaN);
++      const diff = Number.isFinite(before) && Number.isFinite(after) ? Math.max(0, before - after) : NaN;
++      const refundAmount = Number.isFinite(total) ? total : (Number.isFinite(diff) ? diff : 0);
++      return { refundable: !!webuid && refundAmount > 0 && !alreadyRefunded, webuid: webuid || null, refundAmount, alreadyRefunded };
++    }
++  } catch {}
++
++  // توافقيًا: المسار القديم
++  const [pubRes, privRes] = await Promise.all([
++    fetch(${FIRESTORE}/orders//public/main, { headers: { Authorization: Bearer  } }),
++    fetch(${FIRESTORE}/orders//private/main, { headers: { Authorization: Bearer  } }),
++  ]);
++  if (!pubRes.ok || !privRes.ok) return { refundable: false };
++  const pub = await pubRes.json();
++  const priv = await privRes.json();
++  const alreadyRefunded = !!priv?.fields?.refundIssued?.booleanValue;
++  const webuid = priv?.fields?.webuid?.stringValue;
++  let totalRaw = pub?.fields?.total?.doubleValue ?? pub?.fields?.total?.stringValue;
++  let total = Number(totalRaw);
++  if (!Number.isFinite(total)) total = NaN;
++  const before = Number(priv?.fields?.balanceBefore?.doubleValue ?? priv?.fields?.balanceBefore?.integerValue ?? NaN);
++  const after  = Number(priv?.fields?.balanceAfter?.doubleValue  ?? priv?.fields?.balanceAfter?.integerValue  ?? NaN);
++  const diff = Number.isFinite(before) && Number.isFinite(after) ? Math.max(0, before - after) : NaN;
++  const refundAmount = Number.isFinite(total) ? total : (Number.isFinite(diff) ? diff : 0);
++  return { refundable: !!webuid && refundAmount > 0 && !alreadyRefunded, webuid: webuid || null, refundAmount, alreadyRefunded };
++}
+*** End Patch
