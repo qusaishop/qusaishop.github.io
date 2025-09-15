@@ -1379,28 +1379,14 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
         updateViewForInline(true);
         scrollTop();
         clear(inlineBox);
-        var loading = document.createElement('div'); loading.textContent = '... جاري التحميل'; loading.style.opacity = '.8'; loading.style.margin='16px 0'; inlineBox.appendChild(loading);
-        try { if (typeof showPageLoader === 'function') showPageLoader(); } catch(_){ }
-        try{
-          var res = await fetch(r.url, { credentials:'same-origin' });
-          var txt = await res.text();
-          clear(inlineBox);
-          var content = extractContent(txt);
+        // Load inline templates directly (external list files were removed)
+        var content = renderFromTemplate(key);
+        if (content) {
           inlineBox.appendChild(content);
           try{ if (typeof applyCardsVisibility === 'function') applyCardsVisibility(); }catch(_){ }
           try{ attachSearchBehavior(inlineBox); }catch(_){ }
-        }catch(e){
-          clear(inlineBox);
-          var fallback = renderFromTemplate(key);
-          if (fallback) {
-            inlineBox.appendChild(fallback);
-            try{ if (typeof applyCardsVisibility === 'function') applyCardsVisibility(); }catch(_){ }
-            try{ attachSearchBehavior(inlineBox); }catch(_){ }
-          } else {
-            var err = document.createElement('div'); err.textContent = 'حدث خلل مؤقت. سيتم إعادة المحاولة لاحقًا.'; inlineBox.appendChild(err);
-          }
-        } finally {
-          try { if (typeof hidePageLoader === 'function') hidePageLoader(); } catch(_){ }
+        } else {
+          var err = document.createElement('div'); err.textContent = 'لا يوجد محتوى متاح حالياً.'; inlineBox.appendChild(err);
         }
       }
 
