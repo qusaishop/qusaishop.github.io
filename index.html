@@ -131,9 +131,7 @@
   <!-- Scripts -->
   <script src="header.js" defer></script>
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js" async></script>
-  <!-- Loader assets -->
-  <link rel="stylesheet" href="loader.css">
-  <script src="loader.js" defer></script>
+    
 
   <meta name="color-scheme" content="dark light">
 
@@ -538,8 +536,7 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
     }
   </style>
 </head>
-<body>
-  <div id="preloader"><div class="loader"></div></div>
+  <body>
 
 <div id="headerContainer"></div>
 <div id="sidebarContainer"></div>
@@ -1385,8 +1382,23 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
           inlineBox.appendChild(content);
           try{ if (typeof applyCardsVisibility === 'function') applyCardsVisibility(); }catch(_){ }
           try{ attachSearchBehavior(inlineBox); }catch(_){ }
+          // Hide the page loader after inline content is ready (hash navigation)
+          try {
+            // Clear loader session flags so global guards don’t block hiding
+            sessionStorage.removeItem('nav:loader:expected');
+            sessionStorage.removeItem('nav:loader:showAt');
+          } catch(_){ }
+          try {
+            // Give layout a tick to settle, then hide smoothly
+            requestAnimationFrame(function(){ requestAnimationFrame(function(){
+              if (typeof hidePageLoader === 'function') hidePageLoader();
+            }); });
+          } catch(_){ if (typeof hidePageLoader === 'function') hidePageLoader(); }
         } else {
           var err = document.createElement('div'); err.textContent = 'لا يوجد محتوى متاح حالياً.'; inlineBox.appendChild(err);
+          // Ensure loader never gets stuck even on failure
+          try { sessionStorage.removeItem('nav:loader:expected'); sessionStorage.removeItem('nav:loader:showAt'); } catch(_){ }
+          try { if (typeof hidePageLoader === 'function') hidePageLoader(); } catch(_){ }
         }
       }
 
@@ -1437,6 +1449,7 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
 
 </body>
 </html>
+
 
 
 

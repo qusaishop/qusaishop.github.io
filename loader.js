@@ -68,26 +68,47 @@ document.addEventListener('DOMContentLoaded', function(){
   try { expected = sessionStorage.getItem(KEY_FLAG) === '1'; shownAt = Number(sessionStorage.getItem(KEY_TIME) || 0) || 0; } catch(_){ }
 
   if (expected) {
-    var MIN_HOLD = 450;     // ms: minimum visible time for smoothness
-    var MAX_SAFETY = 2200;  // ms: ensure we never get stuck
+    // Navigated from within the site: keep a small minimum hold to avoid flicker,
+    // but DO NOT wait for full window 'load' which can be delayed by non-critical assets.
+    var MIN_HOLD = 300;     // ms: minimum visible time for smoothness
+    var MAX_SAFETY = 1600;  // ms: ensure we never get stuck
     var now = Date.now();
     var remain = Math.max(0, MIN_HOLD - (now - shownAt));
 
-    var loadDone = false, timerDone = false, safetyDone = false;
-    function tryHide(){ if (loadDone && (timerDone || safetyDone)) { hide(); cleanup(); } }
+    var done = false;
+    function doHide(){ if (done) return; done = true; try{ requestAnimationFrame(function(){ requestAnimationFrame(function(){ hide(); cleanup(); }); }); } catch(_){ hide(); cleanup(); } }
 
-    window.addEventListener('load', function(){ loadDone = true; tryHide(); });
-    setTimeout(function(){ timerDone = true; tryHide(); }, remain);
-    setTimeout(function(){ safetyDone = true; tryHide(); }, Math.max(remain + 800, 1200));
-    document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') tryHide(); });
+    // Hide after the remaining hold once DOM is ready (we're already in DOMContentLoaded)
+    setTimeout(function(){
+      // Prefer to hide when page is visible to avoid flash on background tabs
+      if (document.visibilityState === 'visible') { doHide(); }
+      else {
+        var vis = function(){ if (document.visibilityState === 'visible') { document.removeEventListener('visibilitychange', vis); doHide(); } };
+        document.addEventListener('visibilitychange', vis);
+        // Hard cap anyway
+        setTimeout(doHide, 600);
+      }
+    }, remain);
+
+    // Absolute safety cap
+    setTimeout(doHide, Math.max(remain + 800, MAX_SAFETY));
   } else {
-    // Direct open/refresh: wait for full page load + 2 rAFs to settle layout
-    window.addEventListener('load', function(){
-      try { requestAnimationFrame(function(){ requestAnimationFrame(hide); }); } catch(_){ hide(); }
-    });
+    // Direct open/refresh: hide shortly after DOM is ready; avoid waiting for 'load'.
+    var INITIAL_HOLD = 180; // brief hold to avoid flash
+    var capped = false;
+    function safeHide(){ if (capped) return; capped = true; try{ requestAnimationFrame(function(){ requestAnimationFrame(hide); }); } catch(_){ hide(); } }
+    setTimeout(function(){
+      if (document.visibilityState === 'visible') safeHide();
+      else {
+        var onv = function(){ if (document.visibilityState === 'visible') { document.removeEventListener('visibilitychange', onv); safeHide(); } };
+        document.addEventListener('visibilitychange', onv);
+        setTimeout(safeHide, 600);
+      }
+    }, INITIAL_HOLD);
+    // Final hard cap
+    setTimeout(safeHide, 1500);
   }
 
   // Fallback path: ensure hide on popstate as well
   window.addEventListener('popstate', function(){ hide(); cleanup(); });
 });
-

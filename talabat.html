@@ -136,10 +136,13 @@ body.dark-mode .chip[data-filter="rejected"]{background:#3f1d1d;border-color:#7f
   flex-direction:column;
   gap:8px;
   min-height:200px;
+  /* Explicitly center in both axes in case of overrides */
+  place-items:center;
+  place-content:center;
 }
 body.dark-mode #ordersEmptyMessage{background:#0f172a;border-color:#334155;color:#9aa7b7}
 /* Empty state illustration */
-#ordersEmptyMessage .illu{display:block;margin:0 auto}
+#ordersEmptyMessage .illu{display:block;margin:0 auto;align-self:center}
 #ordersEmptyMessage .caption{font-size:14px}
 body.dark-mode #ordersEmptyMessage .paper{fill:#1f2937}
 
@@ -428,19 +431,31 @@ body.dark-mode .order-status {
 .calendar-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .cal-nav{border:1px solid #e5e7eb;background:#fff;border-radius:8px;padding:4px 10px;cursor:pointer}
 .cal-title{font-weight:800}
+.calendar-sub{display:flex;align-items:center;justify-content:space-between;margin:6px 0 10px;font-size:.9rem}
+.calendar-mode{display:flex;gap:6px}
+.calendar-mode-btn{border:1px solid #e5e7eb;background:#fff;border-radius:8px;padding:4px 10px;cursor:pointer}
+.calendar-mode-btn.active{background:#e5f3fb;border-color:#0ea5e9;color:#0b4a67}
+.calendar-selection{color:#334155;font-weight:600;display:none}
 .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 .calendar-weekday{text-align:center;font-weight:700;font-size:.85rem;padding:6px 0;color:#64748b}
 .calendar-spacer{height:1px}
 .calendar-day{position:relative;text-align:center;padding:10px 0;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;background:#fff}
 .calendar-day .num{position:relative;z-index:1;font-weight:700}
 .calendar-day.has{background:#dcfce7;border-color:#86efac;color:#065f46}
-.calendar-day.active{outline:2px solid #0ea5e9}
+.calendar-day.active{background:#e0f2fe;border-color:#93c5fd;outline:none}
 .calendar-day.disabled{opacity:.5;cursor:not-allowed;pointer-events:none}
+.calendar-day.in-range{background:#e0f2fe;border-color:#93c5fd}
+.calendar-day.range-start,.calendar-day.range-end{background:#e0f2fe;border-color:#93c5fd;outline:none}
 .calendar-day .count{position:absolute;top:-6px;inset-inline-end:-6px;background:#22c55e;color:#fff;border-radius:999px;min-width:18px;height:18px;line-height:18px;padding:0 6px;font-size:11px;box-shadow:0 2px 6px rgba(0,0,0,.15)}
 body.dark-mode .calendar-panel{background:#0f172a;color:#e6edf3;border-color:#334155}
 body.dark-mode .cal-nav{background:#0f172a;border-color:#334155;color:#e6edf3}
 body.dark-mode .calendar-day{background:#0f172a;border-color:#334155}
 body.dark-mode .calendar-day.has{background:#064e3b;border-color:#047857;color:#bbf7d0}
+body.dark-mode .calendar-mode-btn{background:#0f172a;border-color:#334155;color:#e6edf3}
+body.dark-mode .calendar-mode-btn.active{background:#0b2840;border-color:#0ea5e9;color:#7dd3fc}
+body.dark-mode .calendar-day.in-range{background:#0b2840;border-color:#0ea5e9}
+body.dark-mode .calendar-day.active{background:#0b2840;border-color:#0ea5e9;outline:none}
+body.dark-mode .calendar-day.range-start, body.dark-mode .calendar-day.range-end{background:#0b2840;border-color:#0ea5e9;outline:none}
 
 /* Mobile tuning */
 @media (max-width: 420px){
@@ -448,6 +463,7 @@ body.dark-mode .calendar-day.has{background:#064e3b;border-color:#047857;color:#
   .calendar-header{margin-bottom:6px}
   .cal-nav{padding:4px 8px}
   .cal-title{font-size:14px}
+  .calendar-sub{margin:4px 0 8px}
   .calendar-grid{gap:5px}
   .calendar-weekday{font-size:11px;padding:4px 0}
   .calendar-day{padding:8px 0;border-radius:10px}

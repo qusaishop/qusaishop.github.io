@@ -28,6 +28,13 @@ function openCalendar(){
         <div class="cal-title" id="calTitle"></div>
         <button type="button" class="cal-nav" id="calNext">›</button>
       </div>
+      <div class="calendar-sub">
+        <div class="calendar-mode">
+          <button type="button" class="calendar-mode-btn" id="calModeSingle">يوم واحد</button>
+          <button type="button" class="calendar-mode-btn" id="calModeRange">نطاق</button>
+        </div>
+        <div class="calendar-selection" id="calSelectionText"></div>
+      </div>
       <div class="calendar-grid" id="calGrid"></div>
     `;
     overlay.appendChild(panel);
@@ -35,6 +42,21 @@ function openCalendar(){
     CAL.el = overlay;
     panel.querySelector('#calPrev').onclick = ()=> shiftMonth(-1);
     panel.querySelector('#calNext').onclick = ()=> shiftMonth(+1);
+    // تبديل وضع التاريخ
+    const btnSingle = panel.querySelector('#calModeSingle');
+    const btnRange = panel.querySelector('#calModeRange');
+    if (btnSingle) btnSingle.onclick = () => {
+      DATE_MODE = 'single';
+      try{ const uid=(auth.currentUser||firebase.auth().currentUser)?.uid; if(uid){ localStorage.setItem(`orders:dateMode:${uid}`, DATE_MODE); } }catch{}
+      renderCalendar(CAL.year, CAL.month);
+    };
+    if (btnRange) btnRange.onclick = () => {
+      DATE_MODE = 'range';
+      // إن لم يكن من/إلى محددَين، عين البداية اليوم
+      if (!DATE_RANGE.from){ DATE_RANGE.from = SELECTED_DATE_STR || getTodayStr(); }
+      try{ const uid=(auth.currentUser||firebase.auth().currentUser)?.uid; if(uid){ localStorage.setItem(`orders:dateMode:${uid}`, DATE_MODE); localStorage.setItem(`orders:dateRange:${uid}`, JSON.stringify(DATE_RANGE)); } }catch{}
+      renderCalendar(CAL.year, CAL.month);
+    };
   }
   renderCalendar(CAL.year, CAL.month);
 }
@@ -64,37 +86,85 @@ function renderCalendar(year, month){
     if (nextBtn){ nextBtn.disabled = atMax; nextBtn.setAttribute('aria-disabled', atMax?'true':'false'); nextBtn.style.opacity = atMax?'.5':'1'; nextBtn.onclick = () => { if (!nextBtn.disabled) shiftMonth(+1); }; }
   }catch{}
   try{ titleEl.textContent = first.toLocaleDateString('ar-EG',{month:'long',year:'numeric'}); }catch{ titleEl.textContent = `${year}-${pad2(month+1)}`; }
+  // وضع الأزرار ونص الاختيار
+  try{
+    const b1 = CAL.el.querySelector('#calModeSingle');
+    const b2 = CAL.el.querySelector('#calModeRange');
+    if (b1) b1.classList.toggle('active', DATE_MODE === 'single');
+    if (b2) b2.classList.toggle('active', DATE_MODE === 'range');
+    const sel = CAL.el.querySelector('#calSelectionText');
+    if (sel){
+      if (DATE_MODE === 'range'){
+        const f = DATE_RANGE.from, t = DATE_RANGE.to;
+        if (f && t) sel.textContent = `من ${formatArDateStr(f)} إلى ${formatArDateStr(t)}`;
+        else if (f && !t) sel.textContent = `ابدأ: ${formatArDateStr(f)} — اختر النهاية`;
+        else sel.textContent = 'اختر نطاق تاريخ';
+      } else {
+        const ymd = SELECTED_DATE_STR || getTodayStr();
+        sel.textContent = `${formatArDateStr(ymd)}`;
+      }
+    }
+  }catch{}
   const weekdays = ['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
   let html = '';
   for(let i=0;i<7;i++){ html += `<div class="calendar-weekday">${weekdays[i]}</div>`; }
   for(let i=0;i<dow;i++){ html += `<div class="calendar-spacer"></div>`; }
   const selected = SELECTED_DATE_STR || todayStr;
+  const f = DATE_RANGE?.from || null;
+  const t = DATE_RANGE?.to || null;
+  const from = (f && t && f > t) ? t : f;
+  const to = (f && t && f > t) ? f : t;
   for(let d=1; d<=lastDay; d++){
     const ymd = `${year}-${pad2(month+1)}-${pad2(d)}`;
     const cnt = counts[ymd]||0;
     const has = cnt>0 ? ' has' : '';
-    const active = (ymd===selected) ? ' active' : '';
+    let active = '';
+    let rangeCls = '';
+    if (DATE_MODE === 'range'){
+      if (from && to && ymd > from && ymd < to) rangeCls += ' in-range';
+      if (from && ymd === from) { rangeCls += ' range-start'; active = ' active'; }
+      if (to && ymd === to) { rangeCls += ' range-end'; active = ' active'; }
+    } else {
+      active = (ymd===selected) ? ' active' : '';
+    }
     const disabled = (ymd > todayStr || ymd < minDateStr) ? ' disabled' : '';
     const disAttr = disabled ? ' disabled aria-disabled="true"' : '';
-    html += `<button type="button" class="calendar-day${has}${active}${disabled}" data-date="${ymd}"${disAttr}><span class="num">${d}</span>${cnt? `<span class="count">${cnt}</span>`:''}</button>`;
+    html += `<button type="button" class="calendar-day${has}${rangeCls}${active}${disabled}" data-date="${ymd}"${disAttr}><span class="num">${d}</span>${cnt? `<span class="count">${cnt}</span>`:''}</button>`;
   }
   grid.innerHTML = html;
   grid.querySelectorAll('.calendar-day').forEach(btn=>{
     if (btn.classList.contains('disabled')) return;
     btn.onclick = ()=>{
       const ymd = btn.getAttribute('data-date');
-      SELECTED_DATE_STR = ymd || getTodayStr();
-      SELECTED_DATE_MANUAL = true; // تم اختيار التاريخ يدويًا من التقويم
-      try{
-        const uid=(auth.currentUser||firebase.auth().currentUser)?.uid;
-        if(uid){
-          localStorage.setItem(`orders:date:${uid}`, SELECTED_DATE_STR);
-          localStorage.setItem(`orders:date:manual:${uid}`, '1');
+      if (DATE_MODE === 'range'){
+        if (!DATE_RANGE.from || (DATE_RANGE.from && DATE_RANGE.to)){
+          DATE_RANGE = { from: ymd, to: null };
+          try{ const uid=(auth.currentUser||firebase.auth().currentUser)?.uid; if(uid){ localStorage.setItem(`orders:dateRange:${uid}`, JSON.stringify(DATE_RANGE)); } }catch{}
+          renderCalendar(year, month);
+          return;
+        } else if (DATE_RANGE.from && !DATE_RANGE.to){
+          if (ymd < DATE_RANGE.from){ DATE_RANGE = { from: ymd, to: DATE_RANGE.from }; }
+          else { DATE_RANGE.to = ymd; }
+          try{ const uid=(auth.currentUser||firebase.auth().currentUser)?.uid; if(uid){ localStorage.setItem(`orders:dateRange:${uid}`, JSON.stringify(DATE_RANGE)); } }catch{}
+          closeCalendar();
+          syncToolbarUI();
+          recomputeAndRender();
+          return;
         }
-      }catch{}
-      closeCalendar();
-      syncToolbarUI();
-      recomputeAndRender();
+      } else {
+        SELECTED_DATE_STR = ymd || getTodayStr();
+        SELECTED_DATE_MANUAL = true; // تم اختيار التاريخ يدويًا من التقويم
+        try{
+          const uid=(auth.currentUser||firebase.auth().currentUser)?.uid;
+          if(uid){
+            localStorage.setItem(`orders:date:${uid}`, SELECTED_DATE_STR);
+            localStorage.setItem(`orders:date:manual:${uid}`, '1');
+          }
+        }catch{}
+        closeCalendar();
+        syncToolbarUI();
+        recomputeAndRender();
+      }
     };
   });
 }// ===== Firebase init =====
@@ -123,6 +193,9 @@ const PAGINATION = { size: 20, page: 1, orders: [] };
 let ORDERS_FILTER = 'all';   // all | pending | approved | rejected
 let SELECTED_DATE_STR = null; // 'YYYY-MM-DD' — التاريخ المختار (محلي)
 let SELECTED_DATE_MANUAL = false; // هل اختاره المستخدم يدويًا؟
+// وضع التاريخ: يوم واحد أو نطاق
+let DATE_MODE = 'single'; // 'single' | 'range'
+let DATE_RANGE = { from: null, to: null }; // في حال النطاق
 
 function pad2(n){ return (n<10? '0':'') + n; }
 function getTodayStr(){ const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
@@ -132,9 +205,12 @@ function isSameDayMs(ms, ymd){ if(!ms||!ymd) return false; try{ const d=new Date
 
 // نص زر التاريخ: إن كان الاختيار يدويًا لا نعرض "اليوم" حتى لو كان نفس يوم اليوم
 function getDateChipText(){
+  if (DATE_MODE === 'range'){
+    // لا نعرض تفاصيل النطاق في الأعلى — فقط عنوان مختصر
+    return 'التاريخ';
+  }
   const today = getTodayStr();
   const ymd = SELECTED_DATE_STR || today;
-  // اعرض التاريخ دائمًا بدل كلمة "اليوم"
   return 'التاريخ: ' + formatArDateStr(ymd);
 }
 
@@ -166,8 +242,25 @@ function applyOrdersFilter(list){
 }
 
 function applyDateFilter(list){
+  const arr = list || [];
+  if (DATE_MODE === 'range'){
+    const f = DATE_RANGE?.from, t = DATE_RANGE?.to;
+    if (f && t){
+      const from = f <= t ? f : t;
+      const to = t >= f ? t : f;
+      return arr.filter(o => {
+        const ms = getOrderTimeMs(o); if(!ms) return false;
+        const d = new Date(ms); const ymd = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+        return (ymd >= from && ymd <= to);
+      });
+    }
+    if (f && !t){
+      return arr.filter(o => isSameDayMs(getOrderTimeMs(o), f));
+    }
+    return arr; // لا فلترة إن لم يُحدَّد شيء
+  }
   const ymd = SELECTED_DATE_STR || getTodayStr();
-  return (list || []).filter(o => isSameDayMs(getOrderTimeMs(o), ymd));
+  return arr.filter(o => isSameDayMs(getOrderTimeMs(o), ymd));
 }
 
 // لم يعد هناك فرز زمني قابل للتبديل
@@ -197,16 +290,28 @@ firebase.auth().onAuthStateChanged(async user => {
     try{
       const f = localStorage.getItem(`orders:filter:${user.uid}`);
       if (f) ORDERS_FILTER = f;
-      const savedDate = localStorage.getItem(`orders:date:${user.uid}`);
-      const savedManual = localStorage.getItem(`orders:date:manual:${user.uid}`) === '1';
-      if (savedManual && savedDate) {
-        SELECTED_DATE_STR = savedDate;
-        SELECTED_DATE_MANUAL = true; // تم حفظه يدويًا سابقًا
+      // وضع التاريخ: single/range
+      const savedMode = localStorage.getItem(`orders:dateMode:${user.uid}`);
+      DATE_MODE = (savedMode === 'range') ? 'range' : 'single';
+      if (DATE_MODE === 'range'){
+        try {
+          const rawRange = localStorage.getItem(`orders:dateRange:${user.uid}`);
+          const parsed = rawRange ? JSON.parse(rawRange) : null;
+          DATE_RANGE = (parsed && typeof parsed === 'object') ? { from: parsed.from || null, to: parsed.to || null } : { from: null, to: null };
+          if (!DATE_RANGE.from){ DATE_RANGE.from = getTodayStr(); }
+        } catch { DATE_RANGE = { from: getTodayStr(), to: null }; }
       } else {
-        // افتراضيًا اعرض آخر يوم مفتوح (اليوم)
-        SELECTED_DATE_STR = getTodayStr();
-        SELECTED_DATE_MANUAL = false;
-        try { localStorage.setItem(`orders:date:${user.uid}`, SELECTED_DATE_STR); localStorage.setItem(`orders:date:manual:${user.uid}`, '0'); } catch {}
+        const savedDate = localStorage.getItem(`orders:date:${user.uid}`);
+        const savedManual = localStorage.getItem(`orders:date:manual:${user.uid}`) === '1';
+        if (savedManual && savedDate) {
+          SELECTED_DATE_STR = savedDate;
+          SELECTED_DATE_MANUAL = true; // تم حفظه يدويًا سابقًا
+        } else {
+          // افتراضيًا اعرض آخر يوم مفتوح (اليوم)
+          SELECTED_DATE_STR = getTodayStr();
+          SELECTED_DATE_MANUAL = false;
+          try { localStorage.setItem(`orders:date:${user.uid}`, SELECTED_DATE_STR); localStorage.setItem(`orders:date:manual:${user.uid}`, '0'); } catch {}
+        }
       }
       const chipsWrap = document.getElementById('ordersToolbar');
       if (chipsWrap){
@@ -476,19 +581,19 @@ function drawOrdersPage() {
     if (ORDERS_FILTER === 'approved') message = 'لا توجد طلبات مشحونة';
     else if (ORDERS_FILTER === 'rejected') message = 'لا توجد طلبات مرفوضة';
     else if (ORDERS_FILTER === 'pending') message = 'لا توجد طلبات قيد الانتظار';
-    // دائمًا استخدم عبارة عامة بدون كلمة "اليوم"
-    message += ' في هذا التاريخ';
+    // عبارة بحسب وضع التاريخ
+    message += (DATE_MODE === 'range' ? ' خلال هذه الفترة' : ' في هذا التاريخ');
     msgEl.innerHTML = `
       <svg class="illu" width="96" height="90" viewBox="0 0 96 90" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="overflow:visible">
-        <!-- الخلفية أعلى قليلاً (إزاحة لأعلى مقارنة بالأمامية) -->
-        <g opacity="0.9" transform="translate(0,2)">
+        <!-- الخلفية: أزحناها قليلًا لليسار -->
+        <g opacity="0.9" transform="translate(-8,2)">
           <rect x="12" y="14" rx="8" ry="8" width="56" height="68" fill="#0f172a" opacity="0.15"/>
           <rect x="20" y="8" rx="8" ry="8" width="56" height="68" class="paper" fill="#e5e7eb"/>
           <rect x="34" y="4" width="28" height="10" rx="3" class="clip" fill="#7c3aed"/>
           <circle cx="48" cy="3" r="3" class="dot" fill="#a78bfa"/>
         </g>
-        <!-- الأمامية منخفضة قليلاً لإظهار فرق عمودي -->
-        <g transform="translate(32,6)">
+        <!-- الأمامية: أزحناها قليلًا لليمين ليصبح المركز بينهما -->
+        <g transform="translate(8,6)">
           <rect x="12" y="14" rx="8" ry="8" width="56" height="68" fill="#0f172a" opacity="0.15"/>
           <rect x="20" y="8" rx="8" ry="8" width="56" height="68" class="paper" fill="#e5e7eb"/>
           <rect x="34" y="4" width="28" height="10" rx="3" class="clip" fill="#7c3aed"/>
@@ -638,11 +743,16 @@ document.addEventListener('change', (e) => {
   const input = e.target && e.target.id === 'ordersDatePicker' ? e.target : null;
   if (!input) return;
   const val = String(input.value || '').trim();
+  // التحويل إلى وضع اليوم الواحد عند استخدام حقل التاريخ العادي
+  DATE_MODE = 'single';
+  DATE_RANGE = { from: null, to: null };
   SELECTED_DATE_STR = val || getTodayStr();
   SELECTED_DATE_MANUAL = !!val; // اختيار يدوي فقط إذا كان هناك تاريخ محدد
   try{
     const uid = (auth.currentUser || firebase.auth().currentUser)?.uid;
     if (uid){
+      localStorage.setItem(`orders:dateMode:${uid}`, DATE_MODE);
+      localStorage.setItem(`orders:dateRange:${uid}`, JSON.stringify(DATE_RANGE));
       localStorage.setItem(`orders:date:${uid}`, SELECTED_DATE_STR);
       localStorage.setItem(`orders:date:manual:${uid}`, SELECTED_DATE_MANUAL ? '1' : '0');
     }

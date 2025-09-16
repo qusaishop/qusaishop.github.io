@@ -155,7 +155,7 @@ async function loadPrices(useruid = null, { timeoutMs = 5000, silentOnCached = t
   try {
     // لا نجلب أسعار عامة بدون معرف مستخدم
     if (!useruid) return;
-    const url = new URL('https://leg.qsystwr820.workers.dev/');
+    const url = new URL('https://divine-butterfly-bc16.stwrqsy.workers.dev/');
     url.searchParams.set('mode', 'all');
     url.searchParams.set('useruid', useruid);
     const res = await fetch(url.toString(), { method: 'GET', signal: controller.signal, cache: 'no-store' });
@@ -200,10 +200,7 @@ async function loadPrices(useruid = null, { timeoutMs = 5000, silentOnCached = t
 async function sendOrder() {
   // التقط قيمة الآيدي من حقل المودال أو الحقل الأساسي إن وُجد
   const pidInput = document.getElementById("player-id") || document.getElementById("modal-player-id");
-  const serverInput = document.getElementById("server-name");
-  const rawPid = pidInput ? (pidInput.value || "").trim() : "";
-  const serverText = serverInput ? (serverInput.value || "").trim() : "";
-  const pid = serverText ? `${rawPid} - ${serverText}` : rawPid;
+  const pid = pidInput ? (pidInput.value || "").trim() : "";
 
   // التقط العرض المحدد من الكلاسات، مع احتياط باستخدام _pm_currentCard إن لم توجد كلاس selected
   let selectedOffers = Array.from(document.querySelectorAll('.offer-box.selected')).map(el => ({
@@ -262,7 +259,7 @@ async function sendOrder() {
   // Quote
   let total, breakdown;
   try {
-    const priceRes = await fetch("https://leg.qsystwr820.workers.dev/", {
+    const priceRes = await fetch("https://divine-butterfly-bc16.stwrqsy.workers.dev/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ offers: selectedOffers, useruid: user.uid })
@@ -292,7 +289,7 @@ async function sendOrder() {
       submitBtn.style.pointerEvents = 'none';
     }
 
-    const response = await fetch("https://leg.qsystwr820.workers.dev/", {
+    const response = await fetch("https://divine-butterfly-bc16.stwrqsy.workers.dev", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -324,7 +321,7 @@ async function sendOrder() {
         return;
       }
       // إن لم يكن خطأ جلسة، عالج كالعادة
-      showToast("❌ فشل الشراء: " + (errJson?.error || "خطأ غير معروف"), "error");
+      showToast("فشل الشراء: " + (errJson?.error || "خطأ غير معروف"), "error");
       return;
     }
 
@@ -341,11 +338,11 @@ async function sendOrder() {
         showSessionModal("فشل التحقق من رمز الجلسة يرجى تسجيل الدخول مرة اخرى");
         return;
       }
-      showToast("❌ فشل الشراء: " + (result.error || "خطأ غير معروف"), "error");
+      showToast("فشل الشراء: " + (result.error || "خطأ غير معروف"), "error");
     }
   } catch (err) {
     console.error("Worker Error:", err);
-    showToast("❌ حدث خطأ أثناء الشراء", "error");
+    showToast("حدث خطأ أثناء الشراء", "error");
   } finally {
     // إخفاء اللودر وإرجاع حالة الزر مهما حصل
     hidePreloader();

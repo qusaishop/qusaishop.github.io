@@ -3,10 +3,10 @@
  <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>موبايل ليجند | متجر قصي</title>
+ <title>فري فاير | متجر قصي</title>
   <link rel="icon" href="https://i.ibb.co/zHC1tQ8b/1757362837638.png" type="image/png">
 
-  <!-- حارس مبكر: منع فتح الصفحة مباشرةً أو إن كانت البطاقة مغلقة -->
+  <!-- حارس مبكر: منع فتح الصفحة مباشرةً فقط (بدون الاعتماد على كاش الحالات) -->
   <script>
     (function(){
       try{
@@ -14,18 +14,7 @@
         var page = base.replace(/\.html$/,'');
         var redirectTo = 'index.html';
 
-        try{
-          var raw = localStorage.getItem('statesCache');
-          if (raw){
-            var obj = JSON.parse(raw);
-            var map = obj && obj.map ? obj.map : null;
-            if (map && page && map[page] === 'off'){
-              try{ sessionStorage.setItem('nav:reason','closed:'+page); }catch(_){ }
-              return window.location.replace(redirectTo);
-            }
-          }
-        }catch(_){/* ignore */}
-
+        // امنع الدخول المباشر إن لم يكن من داخل الموقع
         var nav = (performance.getEntriesByType && performance.getEntriesByType('navigation')) || [];
         var type = nav[0] ? nav[0].type : (performance.navigation ? (performance.navigation.type === 1 ? 'reload' : (performance.navigation.type === 2 ? 'back_forward' : '')) : '');
         var isReload = type === 'reload';
@@ -69,7 +58,6 @@
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 
   <!-- تحميل مسبق لصورة العروض المتكررة -->
-  <link rel="preload" as="image" href="https://i.ibb.co/m5HLhf1n/1756802404151-1.jpg">
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -165,7 +153,7 @@
   </script>
   
   <!-- تهيئة Firebase أولاً -->
-  <script src="script1leg.js"></script>
+  <script src="‏‏script1canva.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js" async></script>
@@ -173,7 +161,7 @@
   <link href="header.css" rel="stylesheet"/>
   <script defer src="header.js"></script>
   <script defer src="atff.js"></script>
-  <script defer src="scriptleg.js"></script>
+  <script defer src="script.js"></script>
   <link rel="stylesheet" href="loader.css">
   <script src="loader.js" defer></script>
   <audio id="toast-success-sound" preload="none" src="success.mp3"></audio>
@@ -254,9 +242,9 @@
     .voucher .sep{ unicode-bidi: isolate; display:inline-block; padding: 0 .15rem; }
     .voucher .price{ white-space: nowrap; }
 
-    /* شريط البحث + شبكة الكروت (مطابقة لطابع mobailleginbut) */
+    /* شريط البحث + شبكة الكروت (مطابقة لطابع canvainbut) */
     .search-container {
-      max-width: 600px;
+      max-width: 1100px;
       margin: 0 auto 24px auto;
       display: flex;
       justify-content: center;
@@ -703,10 +691,8 @@ html[data-theme="dark"] #myOffersContainer .offer-box.card.auto{
             </div>
           </div>
           <div class="pm-input">
-            <input id="player-id" type="text" inputmode="numeric" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="ادخل الايدي هنا" />
-          </div>
-          <div class="pm-input">
-            <input id="server-name" type="text" inputmode="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="السيرفر (مثال: الشرق الأوسط)" />
+            <input id="player-id" type="email" autocomplete="email" aria-label="البريد الإلكتروني" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="ادخل البريد الإلكتروني هنا" />
+
           </div>
           <div class="pm-actions">
             <button type="button" id="pm-cancel" class="btn btn-outline">إلغاء</button>
@@ -720,7 +706,7 @@ html[data-theme="dark"] #myOffersContainer .offer-box.card.auto{
       
 
       
-      <!-- شريط البحث (مطابق لـ mobailleginbut) -->
+      <!-- شريط البحث (مطابق لـ canvainbut) -->
       <div class="search-container">
         <input type="text" id="ffSearchInput" placeholder="ابحث عن الباقات..." aria-label="بحث" />
       </div>
@@ -791,7 +777,7 @@ html[data-theme="dark"] #myOffersContainer .offer-box.card.auto{
       img.src = imgSrc; img.alt = imgAlt;
       img.loading = 'lazy'; img.decoding = 'async'; img.setAttribute('fetchpriority','low');
       div.appendChild(img);
-      const h2 = document.createElement("h2"); h2.textContent = jewels ? `${jewels} الماس` : offer; div.appendChild(h2);
+      const h2 = document.createElement("h2"); h2.textContent = jewels ? `${jewels} شهر` : offer; div.appendChild(h2);
       // إضافة السعر أسفل الاسم
       const priceDiv = document.createElement("div");
       priceDiv.className = "offer-price";
@@ -808,12 +794,9 @@ html[data-theme="dark"] #myOffersContainer .offer-box.card.auto{
   const offersBox = document.createElement("div"); offersBox.className = "offers-box";
   const grid = document.createElement("section"); grid.className = "categories"; offersBox.appendChild(grid);
   const topupOffers = [
-  { jewels: 221,  imgSrc: "https://i.ibb.co/m5bpV5gN/1757504054278.jpg", imgAlt: "221 الماس" },
-  { jewels: 336,  imgSrc: "https://i.ibb.co/m5bpV5gN/1757504054278.jpg", imgAlt: "336 الماس" },
-  { jewels: 570,  imgSrc: "https://i.ibb.co/m5bpV5gN/1757504054278.jpg", imgAlt: "570 الماس" },
-  { jewels: 1163, imgSrc: "https://i.ibb.co/m5bpV5gN/1757504054278.jpg", imgAlt: "1163 الماس" },
-  { jewels: 2398, imgSrc: "https://i.ibb.co/m5bpV5gN/1757504054278.jpg", imgAlt: "2398 الماس" },
-  { jewels: 6042, imgSrc: "https://i.ibb.co/m5bpV5gN/1757504054278.jpg", imgAlt: "6042 الماس" }
+    { jewels: 1, imgSrc: "https://i.ibb.co/Zzc6JLS5/IMG-20250915-WA0001.jpg", imgAlt: "1 شهر" },
+    { jewels: 12, imgSrc: "https://i.ibb.co/Zzc6JLS5/IMG-20250915-WA0001.jpg", imgAlt: "12 شهر" },
+
   ];
   // حفظ آخر حالة للعروض
   let _lastOffersState = null;
@@ -863,14 +846,9 @@ html[data-theme="dark"] #myOffersContainer .offer-box.card.auto{
   }
 
   const membershipOffersGrid = document.createElement("div");
-const membershipOffers = [
-  { offer: "أسبوعية", imgSrc: "https://c2c.fp.guinfra.com/file/675fe065b502f4222ac3d16eYc2qxVHF03?fop=imageView/2/w/340/h/340", imgAlt: "عضوية أسبوعية" },
-  { offer: "ستارلايت", imgSrc: "https://c2c.fp.guinfra.com/file/68b571d767297302e9f45d3e14P7XsPx03?fop=imageView/2/w/340/h/340", imgAlt: "عضوية ستارلايت" },
-  { offer: "ستارلايت بلس", imgSrc: "https://c2c.fp.guinfra.com/file/6863d74166a11d760d07b52dPEBpmriz03?fop=imageView/2/w/340/h/340", imgAlt: "عضوية ستارلايت بلس" },
-  { offer: "تذكرة الشفق", imgSrc: "https://c2c.fp.guinfra.com/file/675fdfac93e3bc310ba07b79SGAT85QX03?fop=imageView/2/w/340/h/340", imgAlt: "تذكرة الشفق" }
-];
+  const membershipOffers = [
 
-
+  ];
 
   // عند تحميل الصفحة، انتظر تحميل الأسعار ثم اعرض البطاقات
   function waitAndRenderOffers() {
@@ -967,7 +945,7 @@ function toggleOffer(element) {
   const price = offersPrices[key];
   if (price !== undefined) {
     total += Number(price);
-const nameText  = element.dataset.jewels ? `${element.dataset.jewels} الماس` : element.dataset.offer;
+const nameText  = element.dataset.jewels ? `${element.dataset.jewels} شهر` : element.dataset.offer;
 const priceText = `${Number(price).toFixed(2)} د.أ`;
 breakdownLines.push(
   `<span class="item-name">${nameText}</span> : <span class="item-price">${priceText}</span>`
@@ -989,7 +967,7 @@ if (breakdownLines.length === 0) {
   el.classList.remove("no-selection");
 }
 
-// فلترة البحث بنفس أسلوب mobailleginbut + إظهار رسالة لا نتائج كالرئيسية
+// فلترة البحث بنفس أسلوب canvainbut + إظهار رسالة لا نتائج كالرئيسية
 function filterCardsBySearch(ev){
   const raw = (ev.target.value || '').toString();
   const norm = s => s.toLowerCase()
@@ -1051,7 +1029,7 @@ function _readOfferPriceForElement(el){
     document.querySelectorAll('.offer-box.selected').forEach(x => x.classList.remove('selected'));
     el.classList.add('selected');
     window._pm_currentCard = el;
-    const title = el.dataset.jewels ? `${el.dataset.jewels} الماس` : (el.dataset.offer || '—');
+    const title = el.dataset.jewels ? `${el.dataset.jewels} شهر` : (el.dataset.offer || '—');
     const { priceText } = _readOfferPriceForElement(el);
     document.getElementById('pm-title').textContent = title;
     document.getElementById('pm-price').textContent = priceText;
@@ -1134,7 +1112,7 @@ window.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => { toast.style.transform = 'translateY(100px)'; toast.style.opacity = '0'; setTimeout(() => { toast.style.visibility = 'hidden'; }, 500); }, duration);
   }
 
-  // زر لصق الايدي
+  // زر لصق البريد الإلكتروني
   async function pastePlayerId(){
     try{
       const input = document.getElementById('player-id');
@@ -1157,7 +1135,7 @@ window.addEventListener('DOMContentLoaded', () => {
       input.value = val;
       try{ input.dispatchEvent(new Event('input', {bubbles:true})); }catch(_){}
       input.focus();
-      showToast('تم لصق الايدي', 'success');
+      showToast('تم لصق البريد الإلكتروني', 'success');
     }catch(e){
       showToast('تعذر قراءة الحافظة. الصق يدوياً', 'warning');
     }
@@ -1190,8 +1168,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
   document.addEventListener("DOMContentLoaded", async () => {
     try {
-      // جلب من topup > mobailleg والحقل state نص JSON
-      const stateDoc = await firebase.firestore().collection("topup").doc("mobailleg").get();
+      // جلب من topup > canva والحقل state نص JSON
+      const stateDoc = await firebase.firestore().collection("topup").doc("canva").get();
       if (stateDoc.exists) {
         let stateData = stateDoc.data();
         if (stateData && typeof stateData.state === 'string') {
@@ -1244,7 +1222,7 @@ window.addEventListener('DOMContentLoaded', () => {
           }
         });
       } else {
-        console.warn("⚠️ لم يتم العثور على وثيقة الحالة في Firestore (topup/mobailleg)");
+        console.warn("⚠️ لم يتم العثور على وثيقة الحالة في Firestore (topup/canva)");
       }
     } catch (e) { console.error("❌ فشل في جلب حالة العروض:", e); }
   });

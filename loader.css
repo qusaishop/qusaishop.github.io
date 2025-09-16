@@ -16,6 +16,10 @@
   will-change: opacity, visibility; /* يقلل التقطّع عند الإخفاء */
 }
 
+/* تعطيل التعليق في حال فشل الجافاسكريبت: إخفاء تلقائي بعد مهلة قصيرة */
+@keyframes preloaderAutoHide { to { opacity: 0; visibility: hidden; } }
+#preloader.auto-hide { animation: preloaderAutoHide 0s linear 1.2s forwards; }
+
 /* الوضع الداكن */
 html[data-theme="dark"] #preloader,
 body.dark-mode #preloader {
@@ -100,3 +104,8 @@ body.dark-mode .loader {
 }
 
 /* (تمت إزالة تخصيصات الموبايل لاستعادة السلوك السابق) */
+/* تحسين الأداء على الشاشات الصغيرة: إلغاء تأثيرات مكلفة */
+@media (max-width: 480px) {
+  #preloader { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .loader { filter: none; }
+}
