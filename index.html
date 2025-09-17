@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
@@ -322,8 +322,8 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
 .card.maintenance h2{color:#a00}
 .card.maintenance img{filter:grayscale(100%)}
 
-.card.pending-state{pointer-events:none;opacity:.7;position:relative}
-.card.pending-state::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,var(--shimmer-stripe),transparent);animation:shimmer 1.2s infinite;border-radius:12px}
+.card.pending-state{pointer-events:none;opacity:.7;position:relative;overflow:hidden}
+.card.pending-state::after{content:'';position:absolute;top:0;right:-150px;width:100px;height:100%;background:linear-gradient(90deg,transparent,var(--shimmer-stripe),transparent);animation:shimmer 1.2s infinite;border-radius:12px;z-index:2}
 @keyframes shimmer{0%{right:-150px}100%{right:100%}}
 
 .card.loading{position:relative;background:var(--skeleton);overflow:hidden;pointer-events:none}
@@ -770,15 +770,39 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
         var cards = Array.prototype.slice.call(document.querySelectorAll('a.card, .card[href]'));
         if (!cards.length) return;
         cards.forEach(prepCard);
-        if (window.__SKIP_FIREBASE__){
-          try{
-            cards.forEach(function(card){ try{ card.removeAttribute('href'); card.classList.add('pending-state'); }catch(_){ } });
-          }catch(_){ }
-          var cached = readStatesCache(true);
-          if (cached){ cards.forEach(function(card){ var name=getPageNameFromCard(card); var s=(name && cached.hasOwnProperty(name))? cached[name] : 'on'; applyCardState(card,s); }); }
-          return;
+
+        // أضف انيميشن التحميل مؤقتًا
+        try { cards.forEach(function(card){ card.classList.add('pending-state'); }); } catch(_){ }
+
+      // طبّق الكاش سريعًا إن وجد
+      var cached = null;
+      try { cached = readStatesCache(window.__SKIP_FIREBASE__ ? true : false); } catch(_) { cached = null; }
+      if (cached && typeof cached === 'object'){
+        cards.forEach(function(card){
+          var name = getPageNameFromCard(card);
+          var s = (name && Object.prototype.hasOwnProperty.call(cached, name)) ? cached[name] : 'on';
+          // إن كانت الحالة مغلقة طبقها فورًا، وإلا اترك الانيميشن حتى يتم تحديث الشبكة أو انتهاء المهلة
+          if (s === 'off') applyCardState(card, 'off');
+        });
+        // مهلة أمان لإنهاء الانيميشن إن لم تصل الشبكة سريعًا
+        setTimeout(function(){ cards.forEach(function(card){ if (card.classList.contains('pending-state')) applyCardState(card, 'on'); }); }, 1200);
+      } else {
+        // لا يوجد كاش: لا تترك الانيميشن عالقة
+        setTimeout(function(){ cards.forEach(function(card){ applyCardState(card, 'on'); }); }, 800);
+      }
+
+        // إن لم نكن في وضع التخطي، حمّل من الشبكة وحدث الحالة لاحقًا (ويُنهي الانيميشن)
+        if (!window.__SKIP_FIREBASE__){
+          loadStatesMap().then(function(result){
+            var map = (result && result.map) ? result.map : result;
+            map = map || readStatesCache(false) || {};
+            cards.forEach(function(card){
+              var name = getPageNameFromCard(card);
+              var s = (name && map && Object.prototype.hasOwnProperty.call(map, name)) ? map[name] : 'on';
+              applyCardState(card, s);
+            });
+          }).catch(function(){ /* تجاهل */ });
         }
-        loadStatesMap().then(function(map){ if(!map){ map = readStatesCache(false)||{}; } cards.forEach(function(card){ var name=getPageNameFromCard(card); var s=(name && map && map.hasOwnProperty(name))? map[name] : 'on'; applyCardState(card,s); }); });
       }catch(_){ }
     }
     if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', applyStatesToPage); else try{ applyStatesToPage(); }catch(_){ }
@@ -848,10 +872,30 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
       appId: "1:701743074708:web:defc2de594567b6624d381",
       measurementId: "G-00R4XQCB1V"
     };
-    firebase.initializeApp(firebaseConfig);
+    let auth = null;
+    let db = null;
+    let firebaseReady = typeof firebase !== 'undefined' && firebase && typeof firebase.initializeApp === 'function';
 
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+    if (firebaseReady) {
+      try {
+        if (!firebase.apps || !firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        } else {
+          firebase.app();
+        }
+        auth = typeof firebase.auth === 'function' ? firebase.auth() : null;
+        db = typeof firebase.firestore === 'function' ? firebase.firestore() : null;
+      } catch (e) {
+        console.warn('تعذر تهيئة Firebase، سيتم متابعة العرض بدون اتصال.', e);
+        firebaseReady = false;
+        auth = null;
+        db = null;
+      }
+    } else {
+      console.warn('مكتبة Firebase غير متوفرة، سيتم متابعة العرض بدون اتصال.');
+    }
+
+    const firebaseAvailable = firebaseReady && !!auth && !!db;
 
     // ===== حارس طلبات Firebase: منع القراءة عند إعادة التحميل السريع =====
     (function(){
@@ -869,10 +913,11 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
         window.__SKIP_FIREBASE__ = (arr.length >= 3);
       } catch(_) { window.__SKIP_FIREBASE__ = false; }
     })();
+    if (!firebaseAvailable) { window.__SKIP_FIREBASE__ = true; }
 
     function closeResetModal() { resetModal.style.display = 'none'; }
 
-    if (!window.__SKIP_FIREBASE__) auth.onAuthStateChanged(user => {
+    if (!window.__SKIP_FIREBASE__ && firebaseAvailable && auth && typeof auth.onAuthStateChanged === "function") auth.onAuthStateChanged(user => {
       if (user) {
         //loadUserBalance(user.uid);
       } else {
@@ -881,7 +926,7 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
       }
     });
 
-    if (!window.__SKIP_FIREBASE__) auth.onAuthStateChanged(async (user) => {
+    if (!window.__SKIP_FIREBASE__ && firebaseAvailable && auth && typeof auth.onAuthStateChanged === "function") auth.onAuthStateChanged(async (user) => {
       if (user) {
         const userRef = db.collection('users').doc(user.uid);
         const docSnap = await userRef.get();
@@ -889,27 +934,14 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
         if (docSnap.exists) {
           const data = docSnap.data();
 
-          if (data.isBanned === true) {
-            document.body.innerHTML = `
-              <div class="modal">
-                <div class="modal-content">
-                  <h2>🚫 تم تعليق الحساب</h2>
-                  <p>تم تعليق حسابك بسبب أنشطة مشبوهة. إذا كنت تعتقد أن هذا خطأ، يرجى التواصل معنا.</p>
-                  <button id="logoutBtnFromBan" style="margin-top:20px;background:#cc0000;color:#fff;padding:10px 20px;border:none;border-radius:8px;font-size:1rem;cursor:pointer">تسجيل الخروج</button>
-                </div>
-              </div>`;
-            document.getElementById('logoutBtnFromBan').addEventListener('click', () => {
-              firebase.auth().signOut().then(() => { window.location.href = "login.html"; });
-            });
-            return;
-          }
+          // تم تعطيل التحقق من الحظر لتحسين سرعة التجربة وإزالة الحواجز
 
           if (!data.authkey) {
             const authkey = generateAuthKey();
             await userRef.set({ authkey }, { merge: true });
           }
 
-          checkAndRequestPhoneNumber(user);
+          // تمت إزالة مطالبة رقم الهاتف
         }
       } else {
         const el = document.getElementById('balanceAmount');
@@ -955,6 +987,7 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
       }catch(_){ return null; }
     }
     async function loadStatesMap() {
+      if (!firebaseAvailable || !db || typeof db.collection !== 'function') { return { map: {}, fromCache: true }; }
       const ref = db.collection('config').doc('states');
       const tryGet = async () => {
         try { return await ref.get({ source: 'server' }); } catch(_) { return await ref.get(); }
@@ -998,119 +1031,63 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
 
     function applyCardsVisibility() {
       const cards = document.querySelectorAll('.card');
-      // اقفل مؤقتًا ثم اجلب من Firebase فقط
-      lockAllCards();
+      // أضف انيميشن التحميل مؤقتًا
+      cards.forEach(card => {
+        if (!card.dataset.originalHref) {
+          const href = card.getAttribute('href');
+          if (href) card.dataset.originalHref = href;
+        }
+        const titleEl = card.querySelector('h2');
+        if (!card.dataset.originalTitle && titleEl) {
+          card.dataset.originalTitle = titleEl.textContent;
+        }
+        card.classList.add('pending-state');
+      });
 
-      // إذا كان هناك إعادة تحميل سريعة، لا تقرأ من Firebase واستخدم آخر حالات محفوظة
-      if (window.__SKIP_FIREBASE__) {
-        try {
-          const cached = readStatesCache(true); // تجاهل مدة الصلاحية في وضع الحظر
-          if (cached && Object.keys(cached).length){
-            cards.forEach(card => {
-              const pageName = (card.dataset.originalHref || card.getAttribute('href') || '').replace('.html','');
-              const state = Object.prototype.hasOwnProperty.call(cached, pageName) ? cached[pageName] : 'on';
-              applyCardState(card, state);
-            });
-          } else {
-            // لا يوجد كاش: السماح للجميع
-            cards.forEach(card => applyCardState(card, 'on'));
-          }
-        } catch(_) { cards.forEach(card => applyCardState(card, 'on')); }
-        return;
+      // طبّق الكاش إن وجد
+      let cached = null;
+      try { cached = readStatesCache(window.__SKIP_FIREBASE__ ? true : false); } catch(_) { cached = null; }
+      if (cached && typeof cached === 'object') {
+        cards.forEach(card => {
+          const pageName = (card.dataset.originalHref || card.getAttribute('href') || '').replace('.html','');
+          const state = Object.prototype.hasOwnProperty.call(cached, pageName) ? cached[pageName] : 'on';
+          // طبّق الإغلاق فقط فورًا، واترك الفتح إلى حين رد الشبكة أو انتهاء المهلة
+          if (state === 'off') applyCardState(card, 'off');
+        });
+        // مهلة أمان لإنهاء الانيميشن إن لم تصل الشبكة سريعًا
+        setTimeout(() => { cards.forEach(card => { if (card.classList.contains('pending-state')) applyCardState(card, 'on'); }); }, 1200);
+      } else {
+        // لا يوجد كاش: لا تترك الانيميشن عالقة
+        setTimeout(() => { cards.forEach(card => applyCardState(card, 'on')); }, 800);
       }
 
-      // جلب وثيقة واحدة فقط بصيغة JSON وتطبيقها (بدون مصادقة مجهولة افتراضيًا)
-      try {
-        var ENABLE_ANON = false;
-        if (ENABLE_ANON && auth && !auth.currentUser && auth.signInAnonymously) {
-          auth.signInAnonymously().catch(()=>{});
-        }
-      } catch(_){ }
+      // إذا كنا في وضع التخطي لا نقرأ من الشبكة
+      if (window.__SKIP_FIREBASE__) return;
+
+      // حدّث من الشبكة لاحقًا (ويُنهي الانيميشن)
       loadStatesMap()
-        .then(({ map }) => {
+        .then(result => {
+          const map = (result && result.map) ? result.map : (readStatesCache(false) || {});
+          const resolved = map || {};
           cards.forEach(card => {
             const pageName = (card.dataset.originalHref || card.getAttribute('href') || '').replace('.html','');
-            const state = Object.prototype.hasOwnProperty.call(map, pageName) ? map[pageName] : 'on';
+            const state = Object.prototype.hasOwnProperty.call(resolved, pageName) ? resolved[pageName] : 'on';
             applyCardState(card, state);
           });
         })
-        .catch(error => {
-          document.querySelectorAll('.card').forEach(card => applyCardState(card, 'on'));
-        });
+        .catch(() => { /* تجاهل */ });
     }
 
     // ابدأ مباشرة دون الانتظار
     applyCardsVisibility();
 
-    function checkAndRequestPhoneNumber(user) {
-      const userRef = db.collection('users').doc(user.uid);
-      userRef.get().then(doc => {
-        const data = doc.data();
-        if (!data || !data.phone) {
-          const isHome = location.pathname.endsWith('index.html') || location.pathname === '/' || location.pathname === '';
-          if (!isHome) {
-            showPhoneModal(user.uid);
-          } else {
-            showPhoneBanner(user.uid);
-          }
-        }
-      });
-    }
+    // تمت إزالة التحقق من رقم الهاتف — لا حاجة لطلبه
 
-    function showPhoneBanner(uid) {
-      if (document.getElementById('phoneBanner')) return;
+    // تمت إزالة بانر رقم الهاتف
 
-      const banner = document.createElement('div');
-      banner.id = 'phoneBanner';
-      banner.style.cssText = `
-        max-width: 1200px; margin: 0 auto 10px; padding: 12px 16px;
-        background: var(--warn-bg); color: var(--warn-text); border: 1px solid var(--warn-border); border-radius: 10px;
-        display: flex; align-items: center; gap: 10px; justify-content: space-between;
-      `;
+    // تمت إزالة نافذة إدخال رقم الهاتف
 
-      banner.innerHTML = `
-        <div style="display:flex; align-items:center; gap:10px;">
-          <i class="fas fa-info-circle" aria-hidden="true"></i>
-          <span>يرجى إضافة رقم هاتفك لإكمال بيانات الحساب.</span>
-        </div>
-        <div style="display:flex; gap:8px;">
-          <button id="addPhoneBtn" style="padding:8px 14px; border:0; border-radius:8px; background: var(--btn-bg); color: var(--btn-text); cursor:pointer;">إضافة الآن</button>
-          <button id="dismissPhoneBanner" style="padding:8px 12px; border:0; border-radius:8px; background:#e5e7eb; color:#111; cursor:pointer;">لاحقًا</button>
-        </div>
-      `;
-
-      const searchWrapper = document.querySelector('.search-container')?.parentElement || document.body;
-      searchWrapper.insertBefore(banner, document.querySelector('.search-container'));
-
-      banner.querySelector('#addPhoneBtn').addEventListener('click', () => {
-        banner.remove();
-        showPhoneModal(uid);
-      });
-      banner.querySelector('#dismissPhoneBanner').addEventListener('click', () => banner.remove());
-    }
-
-    function showPhoneModal(uid) {
-      const modal = document.createElement('div');
-      modal.className = 'modal';
-      modal.innerHTML = `
-        <div class="modal-content" style="position: relative;">
-          <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
-          <h3>يرجى إدخال رقم هاتفك</h3>
-          <input type="tel" id="phoneInput" placeholder="أدخل رقم الهاتف" />
-          <button onclick="savePhoneNumber('${uid}')">حفظ</button>
-        </div>
-      `;
-      document.body.appendChild(modal);
-    }
-
-    function savePhoneNumber(uid) {
-      const phone = document.getElementById('phoneInput').value.trim();
-      if (!phone || phone.length < 6) { alert('يرجى إدخال رقم هاتف صحيح.'); return; }
-      db.collection('users').doc(uid).update({ phone }).then(() => {
-        alert('تم حفظ رقم الهاتف بنجاح.');
-        document.querySelector('.modal').remove();
-      }).catch(() => { alert('حدث خطأ أثناء حفظ الرقم.'); });
-    }
+    // تمت إزالة حفظ رقم الهاتف
 
     // توافق قديم للثيم
     document.addEventListener('DOMContentLoaded', function () {
@@ -1328,9 +1305,9 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
               '<img src="https://i.ibb.co/Zzc6JLS5/IMG-20250915-WA0001.jpg" alt="كانفا"/>\n' +
               '<h2>كانفا</h2>\n' +
             '</a>\n' +
-            '<a href="chatgpt.html" class="card" data-title="chatgpt Plus">\n' +
-              '<img src="https://i.ibb.co/7NXLfsJk/IMG-20250915-WA0004.jpg" alt="chatgpt Plus"/>\n' +
-              '<h2>chatgpt Plus</h2>\n' +
+            '<a href="ChatGPT.html" class="card" data-title="ChatGPT Plus">\n' +
+              '<img src="https://i.ibb.co/7NXLfsJk/IMG-20250915-WA0004.jpg" alt="ChatGPT Plus"/>\n' +
+              '<h2>ChatGPT Plus</h2>\n' +
             '</a>\n' +
           '</section>',
         freefireinbut:
@@ -1444,6 +1421,14 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
 
       // Expose for back button in toolbar
       window.navigateHome = navigateHome;
+
+      // Public helper to reload states with loading animation
+      try {
+        window.reloadCardsStates = function () {
+          try { applyCardsVisibility(); } catch(_){}
+          try { applyStatesToPage(); } catch(_){}
+        };
+      } catch(_){}
     })();
   </script>
 
