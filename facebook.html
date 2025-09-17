@@ -3,7 +3,7 @@
  <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
- <title>كانفا | متجر قصي</title>
+ <title>فيسبوك | متجر قصي</title>
   <link rel="icon" href="https://i.ibb.co/zHC1tQ8b/1757362837638.png" type="image/png">
 
   <!-- حارس مبكر: منع فتح الصفحة مباشرةً فقط (بدون الاعتماد على كاش الحالات) -->
@@ -153,7 +153,7 @@
   </script>
   
   <!-- تهيئة Firebase أولاً -->
-  <script src="‏‏script1canva.js"></script>
+  <script src="‏‏script1facebook.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js" async></script>
@@ -242,7 +242,7 @@
     .voucher .sep{ unicode-bidi: isolate; display:inline-block; padding: 0 .15rem; }
     .voucher .price{ white-space: nowrap; }
 
-    /* شريط البحث + شبكة الكروت (مطابقة لطابع canvainbut) */
+    /* شريط البحث + شبكة الكروت (مطابقة لطابع facebookinbut) */
     .search-container {
       max-width: 1100px;
       margin: 0 auto 24px auto;
@@ -690,15 +690,24 @@ html[data-theme="dark"] #myOffersContainer .offer-box.card.auto{
               <span id="pm-title">—</span>
             </div>
           </div>
+          <div class="pm-input" style="display:flex; gap:10px; align-items:center;">
+            <div style="flex:1;">
+              <label for="qty-input" style="display:block;font-weight:800;margin:0 0 6px;">العدد</label>
+              <input id="qty-input" type="number" inputmode="numeric" min="100" max="10000" step="1" value="100" aria-label="العدد" placeholder="اكتب الكمية" />
+            </div>
+            <div style="flex:1;">
+              <label style="display:block;font-weight:800;margin:0 0 6px;">الاجمالي</label>
+              <div id="pm-total" class="pm-pill" style="display:inline-block;min-width:90px;text-align:center;">—</div>
+            </div>
+          </div>
           <div class="pm-input">
-            <input id="player-id" type="email" autocomplete="email" aria-label="البريد الإلكتروني" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="ادخل البريد الإلكتروني هنا" />
-
+            <input id="player-id" type="url" autocomplete="off" aria-label="الرابط" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="الرابط" />
           </div>
           <div class="pm-actions">
             <button type="button" id="pm-cancel" class="btn btn-outline">إلغاء</button>
             <button type="button" id="pm-buy" class="btn btn-primary">شراء</button>
           </div>
-          <div class="pm-note">الخدمة يدوية وتستغرق وقتا اكثر من الخدمات التلقائيه</div>
+          <div id="pm-qty-note" class="pm-note">يجب أن تكون الكمية أكبر من أو تساوي 100 وأصغر من 10000</div>
           
         </div>
       </div>
@@ -706,7 +715,7 @@ html[data-theme="dark"] #myOffersContainer .offer-box.card.auto{
       
 
       
-      <!-- شريط البحث (مطابق لـ canvainbut) -->
+      <!-- شريط البحث (مطابق لـ facebookinbut) -->
       <div class="search-container">
         <input type="text" id="ffSearchInput" placeholder="ابحث عن الباقات..." aria-label="بحث" />
       </div>
@@ -794,9 +803,6 @@ html[data-theme="dark"] #myOffersContainer .offer-box.card.auto{
   const offersBox = document.createElement("div"); offersBox.className = "offers-box";
   const grid = document.createElement("section"); grid.className = "categories"; offersBox.appendChild(grid);
   const topupOffers = [
-    { jewels: 1, imgSrc: "https://i.ibb.co/Zzc6JLS5/IMG-20250915-WA0001.jpg", imgAlt: "1 شهر" },
-    { jewels: 12, imgSrc: "https://i.ibb.co/Zzc6JLS5/IMG-20250915-WA0001.jpg", imgAlt: "12 شهر" },
-
   ];
   // حفظ آخر حالة للعروض
   let _lastOffersState = null;
@@ -843,11 +849,12 @@ html[data-theme="dark"] #myOffersContainer .offer-box.card.auto{
         }
       });
     }
+    try { if (typeof window.__updateFacebookPriceMeta === 'function') window.__updateFacebookPriceMeta(null); } catch(_){}
   }
 
   const membershipOffersGrid = document.createElement("div");
   const membershipOffers = [
-
+    { offer: 'متابعين فيسبوك', imgSrc: 'https://i.ibb.co/HJJy62Y/IMG-20250915-WA0005.jpg', imgAlt: 'متابعين فيسبوك' }
   ];
 
   // عند تحميل الصفحة، انتظر تحميل الأسعار ثم اعرض البطاقات
@@ -883,6 +890,9 @@ html[data-theme="dark"] #myOffersContainer .offer-box.card.auto{
       } catch {}
       renderOffers(pricesObj);
       try { if (typeof updatePurchaseModalPriceIfOpen === 'function') updatePurchaseModalPriceIfOpen(); } catch(_){}
+      if (typeof window.__updateFacebookPriceMeta === 'function') {
+        try { window.__updateFacebookPriceMeta(e.newValue); } catch(_){ }
+      }
     }
   });
 
@@ -899,6 +909,9 @@ html[data-theme="dark"] #myOffersContainer .offer-box.card.auto{
         } catch {}
         renderOffers(pricesObj);
         try { if (typeof updatePurchaseModalPriceIfOpen === 'function') updatePurchaseModalPriceIfOpen(); } catch(_){}
+        if (typeof window.__updateFacebookPriceMeta === 'function') {
+          try { window.__updateFacebookPriceMeta(val); } catch(_){ }
+        }
       }
     };
   })();
@@ -967,7 +980,7 @@ if (breakdownLines.length === 0) {
   el.classList.remove("no-selection");
 }
 
-// فلترة البحث بنفس أسلوب canvainbut + إظهار رسالة لا نتائج كالرئيسية
+// فلترة البحث بنفس أسلوب facebookinbut + إظهار رسالة لا نتائج كالرئيسية
 function filterCardsBySearch(ev){
   const raw = (ev.target.value || '').toString();
   const norm = s => s.toLowerCase()
@@ -1002,7 +1015,7 @@ function _readOfferPriceForElement(el){
   const key = el.dataset.jewels ? `${el.dataset.jewels}_jewels` : el.dataset.offer;
   const p = prices[key];
   const num = p !== undefined ? Number(p) : NaN;
-  return { key, price: p, priceText: isNaN(num)? '—' : `${num.toFixed(3)} د.أ` };
+  return { key, price: p, priceText: isNaN(num)? '—' : `${num.toFixed(2)} د.أ` }; 
 }
 
   // تحديث سعر المودال لحظياً إن كان مفتوحاً عند وصول الأسعار
@@ -1012,8 +1025,10 @@ function _readOfferPriceForElement(el){
       if (!pm || !pm.classList.contains('show')) return;
       if (!window._pm_currentCard) return;
       const { priceText } = _readOfferPriceForElement(window._pm_currentCard);
-      const el = document.getElementById('pm-price');
-      if (el) el.textContent = priceText || '—';
+      const priceEl = document.getElementById('pm-price');
+      if (priceEl) priceEl.textContent = priceText || '—';
+      const totalEl = document.getElementById('pm-total');
+      if (totalEl) totalEl.textContent = priceText || '—';
     }catch(_){/* ignore */}
   }
 
@@ -1033,6 +1048,12 @@ function _readOfferPriceForElement(el){
     const { priceText } = _readOfferPriceForElement(el);
     document.getElementById('pm-title').textContent = title;
     document.getElementById('pm-price').textContent = priceText;
+      try {
+        if (typeof window.__updateFacebookPriceMeta === 'function') {
+          window.__updateFacebookPriceMeta(null);
+        }
+      } catch(_){}
+    try { document.getElementById('pm-total').textContent = priceText; } catch(_){ }
     const pid  = document.getElementById('player-id');
     const mpid = document.getElementById('modal-player-id');
     if (pid && mpid) mpid.value = (pid.value || '').trim();
@@ -1084,6 +1105,13 @@ window.addEventListener('DOMContentLoaded', () => {
     const pid = document.getElementById('player-id');
     if (pid && mpid) pid.value = mpid.value.trim();
     if (!_pm_currentCard){ showToast('الرجاء اختيار عرض', 'warning'); return; }
+    // تحقق من صحة الكمية قبل الإرسال
+    const qtyEl = document.getElementById('qty-input');
+    const q = Number(qtyEl && qtyEl.value);
+    if (!Number.isFinite(q) || q < 100 || q >= 10000) {
+      showToast('الكمية يجب أن تكون أكبر من أو تساوي 100 وأصغر من 10000', 'warning');
+      return;
+    }
     // أرسل الطلب
     try { if (typeof sendOrder === 'function') await sendOrder(); }
     finally { closePurchaseModal(); }
@@ -1146,6 +1174,298 @@ window.addEventListener('DOMContentLoaded', () => {
     if (btn) btn.addEventListener('click', pastePlayerId);
   });
 
+  // ===== منطق تسعير الكمية المتغيرة لفيسبوك =====
+  (function setupDynamicFacebookQty(){
+    const qtyEl = document.getElementById('qty-input');
+    const totalEl = document.getElementById('pm-total');
+    const bubbleEl = document.getElementById('pm-price');
+    const noteEl = document.getElementById('pm-qty-note');
+
+    const DEFAULT_LIMITS = Object.freeze({ min: 100, max: 9999, step: 1 });
+    const originalNoteText = noteEl ? noteEl.textContent : '';
+
+    let meta = null;
+    let initialPriceApplied = false;
+    function updateOfferCardPrice(text){
+      const priceText = (typeof text === 'string' && text.trim()) ? text : '—';
+      try {
+        const activeCard = window._pm_currentCard;
+        if (activeCard){
+          const priceEl = activeCard.querySelector('.offer-price');
+          if (priceEl) priceEl.textContent = priceText;
+        }
+      } catch(_){}
+      try {
+        const membershipCard = document.querySelector('.offer-box[data-type="membership"] .offer-price');
+        if (membershipCard) membershipCard.textContent = priceText;
+      } catch(_){}
+    }
+
+
+    function applyInitialPriceIfNeeded(info){
+      if (initialPriceApplied || !qtyEl || !info) return;
+      let desired = 100;
+      const min = Number(info.min);
+      if (Number.isFinite(min) && desired < min) desired = Math.round(min);
+      const stepVal = Number(info.step);
+      const safeStep = Number.isFinite(stepVal) && stepVal > 0 ? Math.round(stepVal) : 1;
+      if (safeStep > 1){
+        const remainder = desired % safeStep;
+        if (remainder !== 0) desired += (safeStep - remainder);
+      }
+      qtyEl.value = String(desired);
+      initialPriceApplied = true;
+    }
+
+    function parseOffersPayload(rawValue){
+      if (rawValue == null) {
+        rawValue = localStorage.getItem('offersPrices');
+      }
+      let parsed = {};
+      if (typeof rawValue === 'string') {
+        try { parsed = JSON.parse(rawValue || '{}') || {}; }
+        catch (_) { parsed = {}; }
+      } else if (rawValue && typeof rawValue === 'object') {
+        parsed = rawValue;
+      }
+      const prices = (parsed && typeof parsed === 'object' && parsed.prices) ? parsed.prices : parsed;
+      const metaData = (parsed && typeof parsed === 'object') ? (parsed.meta || null) : null;
+      const level = (parsed && typeof parsed === 'object' && Object.prototype.hasOwnProperty.call(parsed, 'level')) ? parsed.level : null;
+      return {
+        prices: (prices && typeof prices === 'object') ? prices : {},
+        meta: (metaData && typeof metaData === 'object') ? metaData : null,
+        level
+      };
+    }
+
+    function toNumber(value, fallback){
+      const num = Number(value);
+      return Number.isFinite(num) ? num : fallback;
+    }
+
+    function buildMetaFromSource(source){
+      const prices = source.prices || {};
+      const metaData = source.meta || {};
+      const stepValue = Math.max(1, toNumber(metaData.step, DEFAULT_LIMITS.step));
+      return {
+        min: toNumber(metaData.min, DEFAULT_LIMITS.min),
+        max: toNumber(metaData.max, DEFAULT_LIMITS.max),
+        step: stepValue,
+        unit: {
+          per: toNumber(metaData.unit && metaData.unit.per, 0),
+          price: toNumber(metaData.unit && metaData.unit.price, 0)
+        },
+        prices,
+        level: source.level || null
+      };
+    }
+
+    function setMetaFromRaw(rawValue){
+      const parsed = parseOffersPayload(rawValue);
+      if (!parsed.meta && (!parsed.prices || Object.keys(parsed.prices).length === 0)) {
+        return meta;
+      }
+      meta = buildMetaFromSource(parsed);
+      applyInitialPriceIfNeeded(meta);
+      return meta;
+    }
+
+    function ensureMetaFromCache(){
+      if (meta && meta.prices && Object.keys(meta.prices).length) {
+        return meta;
+      }
+      return setMetaFromRaw(null);
+    }
+
+    function customRound(value){
+      const num = Number(value);
+      if (!Number.isFinite(num)) return null;
+      const parts = num.toString().split('.');
+      if (parts.length === 1) {
+        return Number(num.toFixed(2));
+      }
+      const decimals = (parts[1] + '000').slice(0, 3);
+      const thirdDigit = Number(decimals[2] || '0');
+      let result = Math.floor(num * 100) / 100;
+      if (thirdDigit >= 5) result += 0.01;
+      return Number(result.toFixed(2));
+    }
+
+    function computePrice(tokens, info){
+      if (!info) return null;
+      const q = Number(tokens);
+      if (!Number.isFinite(q)) return null;
+
+      const { unit, prices, step } = info;
+      const per = Number(unit && unit.per);
+      const pricePer = Number(unit && unit.price);
+      if (per > 0 && pricePer > 0){
+        return customRound((q / per) * pricePer);
+      }
+
+      const priceMap = prices || {};
+      const directKeys = [`${q}_tokens`, `topup:${q}`, String(q)];
+      for (const key of directKeys){
+        if (key in priceMap){
+          const val = Number(priceMap[key]);
+          if (Number.isFinite(val)) return customRound(val);
+        }
+      }
+
+      const stepVal = Number(step);
+      if (Number.isFinite(stepVal) && stepVal > 0){
+        const baseKeys = [`${stepVal}_tokens`, `topup:${stepVal}`, String(stepVal)];
+        for (const key of baseKeys){
+          if (key in priceMap){
+            const basePrice = Number(priceMap[key]);
+            if (Number.isFinite(basePrice)){
+              return customRound((q / stepVal) * basePrice);
+            }
+          }
+        }
+      }
+      return null;
+    }
+
+    function formatCurrency(value){
+      const num = Number(value);
+      if (!Number.isFinite(num)) return '—';
+      return num.toFixed(2) + ' د.أ';
+    }
+
+    function updateNote(info, isValid){
+      if (!noteEl) return;
+      const minAllowed = info ? info.min : DEFAULT_LIMITS.min;
+      const maxAllowed = info ? info.max : DEFAULT_LIMITS.max;
+      const stepAllowed = info ? info.step : DEFAULT_LIMITS.step;
+      const minText = Math.round(minAllowed);
+      const maxText = Math.round(maxAllowed);
+      const stepText = Math.max(1, Math.round(stepAllowed));
+      if (stepText > 1){
+        noteEl.textContent = `يجب أن تكون الكمية بين ${minText} و ${maxText} وبمضاعفات ${stepText}`;
+      } else if (originalNoteText){
+        noteEl.textContent = originalNoteText;
+      }
+      noteEl.style.color = isValid ? '#16a34a' : '#ef4444';
+    }
+
+    function refreshQuote(){
+      if (!qtyEl) return;
+      const info = ensureMetaFromCache();
+      const minAllowed = info ? info.min : DEFAULT_LIMITS.min;
+      const maxAllowed = info ? info.max : DEFAULT_LIMITS.max;
+      const stepAllowed = info ? info.step : DEFAULT_LIMITS.step;
+
+      const q = Number(qtyEl.value);
+      const intQty = Number.isInteger(q);
+      const stepMismatch = intQty && stepAllowed > 1 ? (q % stepAllowed !== 0) : false;
+      const invalid = !Number.isFinite(q) || q < minAllowed || q > maxAllowed || !intQty || stepMismatch;
+
+      updateNote(info, !invalid);
+
+      if (invalid){
+        if (totalEl) totalEl.textContent = '—';
+        if (bubbleEl) bubbleEl.textContent = '—';
+        updateOfferCardPrice('—');
+        return;
+      }
+
+      const total = computePrice(q, info);
+      if (total != null){
+        const txt = formatCurrency(total);
+        if (totalEl) totalEl.textContent = txt;
+        if (bubbleEl) bubbleEl.textContent = txt;
+        updateOfferCardPrice(txt);
+      } else {
+        if (totalEl) totalEl.textContent = '—';
+        if (bubbleEl) bubbleEl.textContent = '—';
+        updateOfferCardPrice('—');
+      }
+    }
+    window.__updateFacebookPriceMeta = function(rawValue){
+      setMetaFromRaw(rawValue);
+      refreshQuote();
+    };
+
+    const initialMeta = setMetaFromRaw(null);
+    if (initialMeta && initialPriceApplied){
+      refreshQuote();
+    }
+
+    if (qtyEl){
+      qtyEl.addEventListener('input', () => { refreshQuote(); });
+      setTimeout(refreshQuote, 50);
+    }
+  })();
+
+  // ===== override: sendOrder (صفحة فيسبوك — كمية متغيرة) =====
+  async function sendOrder(){
+    const pidInput = document.getElementById('player-id');
+    const qtyEl = document.getElementById('qty-input');
+    const pid = pidInput ? (pidInput.value || '').trim() : '';
+    const q = Number(qtyEl && qtyEl.value);
+    if (!pid || !Number.isFinite(q) || q < 100 || q >= 10000){
+      showToast('يرجى إدخال رابط صحيح واختيار كمية صحيحة', 'error');
+      return;
+    }
+
+    const user = firebase.auth().currentUser;
+    if (!user){ showToast('❌ يجب تسجيل الدخول أولاً', 'error'); showSessionExpiredModal(); return; }
+    const sessionKey = (typeof getLocalSessionKey==='function') ? getLocalSessionKey() : '';
+    if (!sessionKey){ showSessionExpiredModal(); return; }
+
+    let authkey = null; let idToken = null;
+    try {
+      const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+      if (userDoc.exists) authkey = userDoc.data().authkey || null;
+      idToken = await user.getIdToken(true);
+    } catch { showToast('فشل التحقق من الحساب', 'error'); return; }
+
+    const workerUrl = 'https://facebook.stwrqsy.workers.dev/';
+
+    // Quote
+    let total, breakdown;
+    try{
+      const r = await fetch(workerUrl + '/', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ offers: [{ type:'topup', tokens: q }], useruid: user.uid })
+      });
+      const j = await r.json();
+      if (j?.success === false) throw new Error(j?.error || 'quote failed');
+      total = j.total; breakdown = j.breakdown;
+    }catch(e){ showToast('❌ فشل في حساب السعر', 'error'); return; }
+
+    const submitBtn = document.getElementById('pm-buy');
+    try{
+      showPreloader && showPreloader();
+      if (submitBtn){ submitBtn.disabled = true; submitBtn.dataset._oldText = submitBtn.textContent; submitBtn.textContent = 'جاري المعالجة...'; submitBtn.style.opacity='0.7'; submitBtn.style.pointerEvents='none'; }
+      const resp = await fetch(workerUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-SessionKey': sessionKey },
+        body: JSON.stringify({ playerId: pid, offers: [{ type:'topup', tokens: q }], currency: 'دأ', currentUrl: window.location.href, authkey })
+      });
+      if (resp.status === 401){
+        let err = {}; try{ err = await resp.json(); }catch{}
+        const code = (err?.code||'').toLowerCase();
+        const sessionFail = code.startsWith('session_');
+        if (sessionFail){ showSessionModal && showSessionModal('فشل التحقق من رمز الجلسة يرجى تسجيل الدخول مرة اخرى'); return; }
+        showToast('فشل الشراء: ' + (err?.error||'Unknown'), 'error'); return;
+      }
+      const result = await resp.json();
+      if (result?.success){
+        showConfirmation && showConfirmation(result.orderCode);
+        try{ rotateSessionKeyAfterOrder && rotateSessionKeyAfterOrder(user.uid); }catch{}
+      } else {
+        const code = (result?.code||'').toLowerCase();
+        if (code.startsWith('session_')){ showSessionModal && showSessionModal('فشل التحقق من رمز الجلسة يرجى تسجيل الدخول مرة اخرى'); return; }
+        showToast('فشل الشراء: ' + (result?.error||'خطأ غير معروف'), 'error');
+      }
+    } finally {
+      hidePreloader && hidePreloader();
+      if (submitBtn){ submitBtn.disabled = false; submitBtn.textContent = submitBtn.dataset._oldText || 'شراء'; submitBtn.style.opacity=''; submitBtn.style.pointerEvents=''; }
+    }
+  }
+
   // ===== تهيئة بطاقات التفعيل/التعطيل من Firestore =====
   firebase.auth().onAuthStateChanged(async (user) => {
     if (user) {
@@ -1168,8 +1488,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
   document.addEventListener("DOMContentLoaded", async () => {
     try {
-      // جلب من topup > canva والحقل state نص JSON
-      const stateDoc = await firebase.firestore().collection("topup").doc("canva").get();
+      // جلب من topup > facebook والحقل state نص JSON
+      const stateDoc = await firebase.firestore().collection("topup").doc("facebook").get();
       if (stateDoc.exists) {
         let stateData = stateDoc.data();
         if (stateData && typeof stateData.state === 'string') {
@@ -1222,7 +1542,7 @@ window.addEventListener('DOMContentLoaded', () => {
           }
         });
       } else {
-        console.warn("⚠️ لم يتم العثور على وثيقة الحالة في Firestore (topup/canva)");
+        console.warn("⚠️ لم يتم العثور على وثيقة الحالة في Firestore (topup/facebook)");
       }
     } catch (e) { console.error("❌ فشل في جلب حالة العروض:", e); }
   });
@@ -1252,6 +1572,9 @@ window.addEventListener('DOMContentLoaded', () => {
   
 </body>
 </html>
+
+
+
 
 
 
