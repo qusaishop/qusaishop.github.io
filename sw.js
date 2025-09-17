@@ -8,7 +8,7 @@
  * - The HTML already registers this file conditionally on HTTPS / localhost.
  */
 
-const VERSION = 'v1.0.0';
+const VERSION = 'v1.0.1';
 const STATIC_CACHE = `static-${VERSION}`;
 const IMAGE_CACHE  = `images-${VERSION}`;
 const PAGE_CACHE   = `pages-${VERSION}`;
@@ -59,14 +59,21 @@ function isStaticAsset(req) {
   return false;
 }
 
-// Helper: avoid caching Firebase dynamic API calls, POSTs, etc.
+// Helper: avoid caching Firebase dynamic API calls, POSTs, or unsupported schemes
 function shouldBypass(req) {
-  if (req.method !== 'GET') return true;
-  const url = new URL(req.url);
-  // Firestore/Identity endpoints should bypass
-  if (url.hostname.endsWith('googleapis.com')) return true;
-  if (url.pathname.startsWith('/__/')) return true;
-  return false;
+  try{
+    if (!req || req.method !== 'GET') return true;
+    // Known Chrome quirk: ignore extension/file/blob/data schemes
+    const url = new URL(req.url);
+    const proto = url.protocol;
+    if (proto !== 'http:' && proto !== 'https:') return true; // skip chrome-extension:, file:, data:, blob:
+    // DevTools preloads sometimes use only-if-cached + cross-origin; skip to avoid errors
+    if (req.cache === 'only-if-cached' && req.mode !== 'same-origin') return true;
+    // Firestore/Identity endpoints should bypass
+    if (url.hostname.endsWith('googleapis.com')) return true;
+    if (url.pathname.startsWith('/__/')) return true;
+    return false;
+  }catch(_){ return true; }
 }
 
 // Install: precache small shell
@@ -136,7 +143,7 @@ async function cacheFirstImages(req) {
     const resp = await fetch(req, { mode: req.mode, credentials: 'same-origin' });
     // Cache only if usable (ok or opaque)
     if (resp && (resp.ok || resp.type === 'opaque')) {
-      cache.put(req, resp.clone());
+      try { await cache.put(req, resp.clone()); } catch(_){}
       trimCache(IMAGE_CACHE, IMAGE_MAX_ITEMS);
     }
     return resp;
@@ -157,7 +164,7 @@ async function networkFirstPages(req) {
   try {
     const resp = await fetch(req);
     if (resp && resp.ok) {
-      cache.put(req, resp.clone());
+      try { await cache.put(req, resp.clone()); } catch(_){}
       trimCache(PAGE_CACHE, PAGE_MAX_ITEMS);
       return resp;
     }
@@ -179,7 +186,7 @@ async function staleWhileRevalidateStatic(req) {
   const cached = await cache.match(req, { ignoreVary: true });
   const fetchPromise = fetch(req).then((resp) => {
     if (resp && (resp.ok || resp.type === 'opaque')) {
-      cache.put(req, resp.clone());
+      try { cache.put(req, resp.clone()); } catch(_){}
       trimCache(STATIC_CACHE, STATIC_MAX_ITEMS);
     }
     return resp;

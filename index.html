@@ -1,20 +1,8 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script>
-    (function(){
-      try{
-        var h = location.hostname || '';
-        var isLocal = h === 'localhost' || h === '127.0.0.1' || h === '' || /^0\.0\.0\.0$/.test(h) || /^192\.168\./.test(h) || /^10\./.test(h) || /^172\.(1[6-9]|2\d|3[0-1])\./.test(h);
-        if (location.protocol === 'http:' && !isLocal) {
-          var target = 'https://' + location.host + location.pathname + location.search + location.hash;
-          window.location.replace(target);
-        }
-      }catch(e){}
-    })();
-  </script>
   <title>متجر قصي</title>
   <link rel="icon" href="https://i.ibb.co/Q7Gnqy2z/1757362837638.png" type="image/png">
   <link rel="apple-touch-icon" href="https://i.ibb.co/Q7Gnqy2z/1757362837638.png" sizes="180x180">
@@ -22,11 +10,13 @@
   <meta name="apple-mobile-web-app-title" content="متجر قصي">
 
   <!-- SEO -->
-  <meta name="description" content="متجر قصي | قصي ستور — متجر موثوق لشحن الألعاب والاشتراكات الرقمية بسرعة وأمان. فري فاير، ببجي، روبلوكس، جواكر والمزيد بأسعار تنافسية ودعم فني سريع.">
+  <meta name="description" content="متجر قصي | قصي ستور — متجر موثوق لشحن الألعاب والاشتراكات الرقمية بسرعة وأمان. فري فاير، ببجي،  جواكر والمزيد بأسعار تنافسية ودعم فني سريع.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://qusai.shop/">
   <link rel="alternate" href="https://qusai.shop/" hreflang="ar">
   <link rel="alternate" href="https://qusai.shop/" hreflang="x-default">
+<meta name="keywords" content="قصي شوب, قصي ستور, موبايل ليجند, بلا لودو, جواكر, ببجي, فري فاير, بلود سترايك, وي بلاي, بلياردو, ChatGPT Plus, كانفا, فيسبوك, انستجرام, تسوق, عروض, كروت شحن, خدمات رقمية">
+
 
   <!-- Open Graph / Twitter -->
   <meta property="og:type" content="website">
@@ -42,33 +32,7 @@
   <meta name="twitter:description" content="سرعة وأمان وأسعار تنافسية عبر متجر قصي (قصي ستور).">
   <meta name="twitter:image" content="https://i.ibb.co/Q7Gnqy2z/1757362837638.png">
 
-  <!-- Structured Data -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "Organization",
-        "name": "متجر قصي",
-        "alternateName": ["قصي ستور", "متجر قصي", "Qusai Shop", "Qusai Store"],
-        "url": "https://qusai.shop/",
-        "logo": "https://i.ibb.co/Q7Gnqy2z/1757362837638.png",
-        "image": "https://i.ibb.co/Q7Gnqy2z/1757362837638.png"
-      },
-      {
-        "@type": "WebSite",
-        "name": "متجر قصي",
-        "alternateName": ["قصي ستور", "متجر قصي", "Qusai Shop", "Qusai Store"],
-        "url": "https://qusai.shop/",
-        "potentialAction": {
-          "@type": "SearchAction",
-          "target": "https://qusai.shop/?q={search_term_string}",
-          "query-input": "required name=search_term_string"
-        }
-      }
-    ]
-  }
-  </script>
+
 
   <!-- سكربت تثبيت الثيم مبكرًا جدًا لمنع اللمعة -->
   <script>
@@ -105,25 +69,17 @@
   })();
   </script>
 
-  <!-- تحميل الصور أولاً -->
-  <link rel="preload" as="image" href="https://i.ibb.co/1GYPyKMj/1447-02-27-23-46-21-df66c84f.jpg">
-  <link rel="preload" as="image" href="https://i.ibb.co/Vcq1dr69/1756157590278.jpg">
-  <link rel="preload" as="image" href="https://i.ibb.co/XZHyMGSG/1756247096045.jpg">
-  <link rel="preload" as="image" href="https://i.ibb.co/cXQ1mG6y/prod-68632f4bac1c0-1.jpg">
-  <link rel="preload" as="image" href="https://i.ibb.co/TBh1qpzV/1757616222968.jpg">
 
-  <!-- تحسين الاتصال بالمصادر -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-  <link rel="preconnect" href="https://i.ibb.co" crossorigin>
-  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 
   <!-- الخطوط -->
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+  <!-- Load Google Fonts without blocking first paint -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet"></noscript>
 
   <!-- الأيقونات -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <!-- Load Font Awesome without blocking first paint -->
+  <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" /></noscript>
 
   <!-- CSS -->
   <link rel="preload" href="header.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -327,7 +283,7 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
 @keyframes shimmer{0%{right:-150px}100%{right:100%}}
 
 .card.loading{position:relative;background:var(--skeleton);overflow:hidden;pointer-events:none}
-.card.loading img,.card.loading h2{visibility:hidden}
+.card.loading img,.card.loading h2{visibility:visible}
 .card.loading::after{content:'';position:absolute;top:0;right:-150px;width:100px;height:100%;background:linear-gradient(90deg,transparent,var(--shimmer-stripe),transparent);animation:shimmer 1.2s infinite}
 
 /* Responsive */
@@ -358,14 +314,15 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
     }
   </style>
   <script>
-  // Register Service Worker only in secure contexts (https or localhost)
+  // Register Service Worker only in allowed protocols (https or localhost over http)
   (function(){
     try {
       var h = (location.hostname||'');
       var isLocal = h === 'localhost' || h === '127.0.0.1' || /^0\.0\.0\.0$/.test(h) || /^192\.168\./.test(h) || /^10\./.test(h) || /^172\.(1[6-9]|2\d|3[0-1])\./.test(h);
-      var isSecure = (typeof window.isSecureContext === 'boolean' ? window.isSecureContext : false) || location.protocol === 'https:' || isLocal;
-      if ('serviceWorker' in navigator && isSecure) {
-        navigator.serviceWorker.register('sw.js').catch(function(e){ console.warn('SW register failed', e); });
+      var proto = String(location.protocol || '').toLowerCase();
+      var canRegister = ('serviceWorker' in navigator) && (proto === 'https:' || (proto === 'http:' && isLocal));
+      if (canRegister) {
+        navigator.serviceWorker.register('sw.js', { scope: './' }).catch(function(e){ console.warn('SW register skipped', e); });
       }
     } catch(e) { console.warn('SW register skipped', e); }
   })();
@@ -644,16 +601,16 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
 
 <main>
   <section class="categories" id="categoriesContainer">
-    <a href="games.html" class="card loading" data-title="الألعاب">
-      <img src="https://i.ibb.co/1GYPyKMj/1447-02-27-23-46-21-df66c84f.jpg" alt="ألعاب" loading="lazy" decoding="async" fetchpriority="high" />
+    <a href="games.html" class="card" data-title="الألعاب">
+      <img src="https://i.ibb.co/1GYPyKMj/1447-02-27-23-46-21-df66c84f.jpg" alt="ألعاب" loading="eager" decoding="async" fetchpriority="high" />
       <h2>الألعاب</h2>
     </a>
-    <a href="social.html" class="card loading" data-title="مواقع التواصل الاجتماعي">
-      <img src="https://i.ibb.co/Vcq1dr69/1756157590278.jpg" alt="التواصل الاجتماعي" loading="lazy" decoding="async" fetchpriority="high" />
+    <a href="social.html" class="card" data-title="مواقع التواصل الاجتماعي">
+      <img src="https://i.ibb.co/Vcq1dr69/1756157590278.jpg" alt="التواصل الاجتماعي" loading="eager" decoding="async" fetchpriority="high" />
       <h2>مواقع التواصل</h2>
     </a>
-    <a href="software.html" class="card loading" data-title="اشتراكات البرامج">
-      <img src="https://i.ibb.co/XZHyMGSG/1756247096045.jpg" alt="البرامج" loading="lazy" decoding="async" fetchpriority="high" />
+    <a href="software.html" class="card" data-title="اشتراكات البرامج">
+      <img src="https://i.ibb.co/XZHyMGSG/1756247096045.jpg" alt="البرامج" loading="eager" decoding="async" fetchpriority="high" />
       <h2>اشتراكات البرامج</h2>
     </a>
 
