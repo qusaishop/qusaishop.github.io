@@ -171,8 +171,9 @@
   
   <style>
     /* متغيرات للألوان ليتوافق المودال مع الثيم */
-    :root{ --card-bg:#ffffff; --card-text:#111827; --card-border:#e5e7eb; --input-bg:#ffffff; --input-text:#111827; --btn-bg:#6366f1; --btn-bg-hover:#4f46e5; --btn-text:#ffffff }
-    html[data-theme="dark"], body.dark-mode{ --card-bg:#0f172a; --card-text:#e6edf3; --card-border:#334155; --input-bg:#0b1220; --input-text:#e6edf3; --btn-bg:#475569; --btn-bg-hover:#64748b; --btn-text:#ffffff }
+    /* ألوان الأزرار مطابقة لباقي الصفحات */
+    :root{ --card-bg:#ffffff; --card-text:#111827; --card-border:#e5e7eb; --input-bg:#ffffff; --input-text:#111827; --btn-bg:#0ea5e9; --btn-bg-hover:#0284c7; --btn-text:#ffffff }
+    html[data-theme="dark"], body.dark-mode{ --card-bg:#0f172a; --card-text:#e6edf3; --card-border:#334155; --input-bg:#0b1220; --input-text:#e6edf3; --btn-bg:#0284c7; --btn-bg-hover:#0ea5e9; --btn-text:#ffffff }
     /* اتجاه عام مساعد */
     .rtl { direction: rtl; text-align: right; unicode-bidi: embed; }
 
@@ -183,10 +184,17 @@
     #purchase-modal .pm-header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px }
     #purchase-modal .pm-pill{ background:var(--input-bg); color:var(--text); border-radius:999px; padding:8px 14px; font-weight:800; border:1px solid var(--card-border) }
     /* Make total look like input: equal size, rounded corners */
-    #purchase-modal #pm-total.pm-pill{ display:block; width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--card-border); background:var(--input-bg); color:var(--input-text); text-align:center; font-size:16px; }
+    /* اجعل حقل الإجمالي مماثلاً تماماً لحقل العدد */
+    #purchase-modal #pm-total.pm-pill{
+      display:flex; align-items:center; justify-content:center;
+      width:100%; padding:12px 14px; border-radius:12px;
+      border:1px solid var(--card-border);
+      background:var(--input-bg); color:var(--input-text);
+      text-align:center; font-size:16px; box-sizing:border-box; height:46px;
+    }
     #purchase-modal .pm-title{ font-weight:800; font-size:16px; display:flex; align-items:center; gap:8px }
     #purchase-modal .pm-input{ width:100%; margin:12px 0 6px }
-    #purchase-modal .pm-input input{ width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--card-border); font-size:16px; outline:none; background:var(--input-bg); color:var(--input-text) }
+    #purchase-modal .pm-input input{ width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--card-border); font-size:16px; outline:none; background:var(--input-bg); color:var(--input-text); box-sizing:border-box; height:46px; }
     /* زر اللصق بجانب حقل الايدي داخل المودال */
     #purchase-modal .pm-input{ position: relative; }
     /* لم يعد هناك زر لصق؛ نعيد الحشو الافتراضي من القاعدة الأساسية */
@@ -1050,12 +1058,29 @@ function _readOfferPriceForElement(el){
     const { priceText } = _readOfferPriceForElement(el);
     document.getElementById('pm-title').textContent = title;
     document.getElementById('pm-price').textContent = priceText;
+    // عيّن الكمية الافتراضية إلى 100 واحسب الإجمالي فوراً كحل احتياطي
+    try {
+      const qtyEl = document.getElementById('qty-input');
+      const totalEl = document.getElementById('pm-total');
+      if (qtyEl) qtyEl.value = '100';
+      if (totalEl) {
+        const per100 = Number(String(priceText||'').replace(/[^0-9.]/g,''));
+        if (Number.isFinite(per100)) {
+          const q = Number(qtyEl && qtyEl.value) || 100;
+          const total = (q/100) * per100;
+          totalEl.textContent = total.toFixed(2) + ' د.أ';
+        } else {
+          totalEl.textContent = priceText || '—';
+        }
+      }
+    } catch(_){}
       try {
         if (typeof window.__updateFacebookPriceMeta === 'function') {
           window.__updateFacebookPriceMeta(null);
         }
       } catch(_){}
-    try { document.getElementById('pm-total').textContent = priceText; } catch(_){ }
+    // سيتم تحديث الإجمالي لاحقاً عبر آلية التسعير الديناميكي أيضاً
+    try { document.getElementById('pm-total').textContent = document.getElementById('pm-total').textContent || priceText; } catch(_){ }
     const pid  = document.getElementById('player-id');
     const mpid = document.getElementById('modal-player-id');
     if (pid && mpid) mpid.value = (pid.value || '').trim();
@@ -1335,6 +1360,18 @@ window.addEventListener('DOMContentLoaded', () => {
       return num.toFixed(2) + ' د.أ';
     }
 
+    // حساب احتياطي عندما لا تتوفر الميتا بعد: نعتمد سعر 100 من فقاعة السعر
+    function fallbackTotalForQty(q){
+      try{
+        const txt = bubbleEl ? bubbleEl.textContent : '';
+        const per100 = Number(String(txt||'').replace(/[^0-9.]/g,''));
+        if (!Number.isFinite(per100)) return null;
+        const total = (Number(q)||0) / 100 * per100;
+        if (!Number.isFinite(total)) return null;
+        return customRound(total);
+      }catch{return null}
+    }
+
     function updateNote(info, isValid){
       if (!noteEl) return;
       const minAllowed = info ? info.min : DEFAULT_LIMITS.min;
@@ -1372,7 +1409,11 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const total = computePrice(q, info);
+      let total = computePrice(q, info);
+      if (total == null) {
+        // إن لم تتوفر ميتا بعد، استخدم السعر الاحتياطي المباشر (سعر 100 من الفقاعة)
+        total = fallbackTotalForQty(q);
+      }
       if (total != null){
         const txt = formatCurrency(total);
         if (totalEl) totalEl.textContent = txt;
