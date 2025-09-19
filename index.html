@@ -181,10 +181,17 @@
   .inline-title{display:none}
   </style>
   
-  <!-- بانر علوي: تنسيق بسيط -->
+  <!-- بانر علوي: تنسيق بسيط + سلايدر -->
   <style>
     .page-hero{ max-width:1000px; margin:10px auto 12px; padding:0 }
     .page-hero img{ width:100%; height:auto; display:block; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,.12) }
+
+    /* سلايدر الهيدر */
+    .hero-slider{ position:relative; overflow:hidden; border-radius:12px; touch-action: pan-y }
+    .hero-track{ display:flex; transform:translateX(0); transition:transform .6s ease; will-change:transform; direction:ltr }
+    .hero-slide{ flex:0 0 100%; min-width:100% }
+    .hero-slider.dragging .hero-track{ transition:none; cursor:grabbing }
+    .hero-slide img{ display:block; width:100%; height:auto; -webkit-user-drag:none; user-select:none }
   </style>
 
   <!-- Theme tokens -->
@@ -509,8 +516,115 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
 <div style="height:70px;"></div>
 
     <div class="page-hero">
-      <img src="https://i.ibb.co/TBh1qpzV/1757616222968.jpg" alt="بانر ترحيبي" loading="eager" decoding="async" fetchpriority="high">
+      <div class="hero-slider" id="heroSlider" aria-label="بانرات مميزة">
+        <div class="hero-track">
+          <div class="hero-slide"><img draggable="false" src="https://i.ibb.co/TBh1qpzV/1757616222968.jpg" alt="بانر ترحيبي" loading="eager" decoding="async" fetchpriority="high"></div>
+          <div class="hero-slide"><img draggable="false" src="https://i.ibb.co/PGh4ChVf/1447-03-25-23-25-28-9c3ddea5.jpg" alt="عرض 1"  decoding="async"></div>
+          <div class="hero-slide"><img draggable="false" src="https://i.ibb.co/v4CHSKHy/1447-03-25-23-25-29-a22fe9dc.jpg" alt="عرض 2"  decoding="async"></div>
+        </div>
+      </div>
     </div>
+
+    <script>
+    (function(){
+      var slider = document.getElementById('heroSlider');
+      if(!slider) return;
+      var track = slider.querySelector('.hero-track');
+      var slides = Array.prototype.slice.call(slider.querySelectorAll('.hero-slide'));
+      var realCount = slides.length;
+      // إنشاء نسخ للتكرار اللانهائي (آخر شريحة بالبداية، وأول شريحة بالنهاية)
+      var firstClone = slides[0] && slides[0].cloneNode(true);
+      var lastClone  = slides[realCount-1] && slides[realCount-1].cloneNode(true);
+      if (firstClone) track.appendChild(firstClone);
+      if (lastClone) track.insertBefore(lastClone, track.firstChild);
+      var index = 1; // نبدأ من أول شريحة حقيقية
+      var timer = null;
+      var isDown = false, startX = 0, deltaX = 0, isAnimating = false;
+
+      function go(i, animate){
+        index = i;
+        var w = slider.clientWidth;
+        var withAnim = animate !== false;
+        track.style.transition = withAnim ? 'transform .6s ease' : 'none';
+        track.style.transform = 'translateX(' + (-index*w) + 'px)';
+        isAnimating = withAnim;
+      }
+      function next(){ if(isAnimating) return; go(index+1, true); }
+      function prev(){ if(isAnimating) return; go(index-1, true); }
+
+      function start(){ stop(); timer = setInterval(prev, 7000); }
+      function stop(){ if(timer){ clearInterval(timer); timer=null; } }
+
+      function onDown(e){
+        if(isAnimating) return; // لا تبدأ سحب أثناء الحركة
+        isDown = true; deltaX = 0; slider.classList.add('dragging'); stop();
+        if (e.pointerId !== undefined && slider.setPointerCapture) { try { slider.setPointerCapture(e.pointerId); } catch(_){} }
+        startX = (e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX);
+      }
+      function onMove(e){
+        if(!isDown) return;
+        var x = (e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX);
+        deltaX = x - startX;
+        var w = slider.clientWidth;
+        track.style.transition = 'none';
+        track.style.transform = 'translateX(' + ((-index*w)+deltaX) + 'px)';
+      }
+      function onUp(){
+        if(!isDown) return; isDown=false; slider.classList.remove('dragging');
+        var w = slider.clientWidth; var threshold = Math.min(80, w*0.15);
+        if(Math.abs(deltaX) > threshold){ deltaX>0 ? prev() : next(); }
+        else { go(index, true); }
+        start();
+      }
+
+      slider.addEventListener('pointerdown', onDown);
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+      slider.addEventListener('pointercancel', onUp);
+      slider.addEventListener('touchstart', onDown, {passive:true});
+      slider.addEventListener('touchmove', onMove, {passive:true});
+      slider.addEventListener('touchend', onUp);
+      slider.addEventListener('touchcancel', onUp);
+
+      // منع سحب الصورة الافتراضي
+      slider.addEventListener('dragstart', function(e){ e.preventDefault(); });
+
+      slider.addEventListener('mouseenter', stop);
+      slider.addEventListener('mouseleave', start);
+
+      // عند انتهاء التحريك، إذا كنا على نسخة مكررة، نعيد التمركز للشريحة الحقيقية بدون أن يلاحظ المستخدم
+      track.addEventListener('transitionend', function(){
+        isAnimating = false;
+        if (index === 0) {
+          track.style.transition = 'none';
+          index = realCount;
+          track.style.transform = 'translateX(' + (-index*slider.clientWidth) + 'px)';
+          // إجبار إعادة التدفق ثم إعادة التفعيل
+          void track.offsetHeight;
+          track.style.transition = 'transform .6s ease';
+        } else if (index === realCount + 1) {
+          track.style.transition = 'none';
+          index = 1;
+          track.style.transform = 'translateX(' + (-index*slider.clientWidth) + 'px)';
+          void track.offsetHeight;
+          track.style.transition = 'transform .6s ease';
+        }
+      });
+
+      // تأكيد تحميل الصور لتفادي وميض الفراغ عند السحب السريع
+      try {
+        slides.forEach(function(s){
+          var im = s.querySelector('img');
+          if (im && im.decode) { im.decode().catch(function(){/* ignore */}); }
+        });
+      } catch (_) {}
+
+      // إعادة تموضع عند تغيير العرض لضمان المحاذاة بالبكسل
+      window.addEventListener('resize', function(){ go(index, false); });
+
+      go(1, false); start();
+    })();
+    </script>
 
   <!-- شريط الإشعار: يبدأ من البداية، يخرج تمامًا، ثم يعاود من البداية -->
   <div class="notice-ticker" id="homeTicker" aria-label="إعلانات الموقع">
@@ -602,15 +716,15 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
 <main>
   <section class="categories" id="categoriesContainer">
     <a href="games.html" class="card" data-title="الألعاب">
-      <img src="https://i.ibb.co/1GYPyKMj/1447-02-27-23-46-21-df66c84f.jpg" alt="ألعاب" loading="eager" decoding="async" fetchpriority="high" />
+      <img draggable="false" src="https://i.ibb.co/1GYPyKMj/1447-02-27-23-46-21-df66c84f.jpg" alt="ألعاب" loading="eager" decoding="async" fetchpriority="high" />
       <h2>الألعاب</h2>
     </a>
     <a href="social.html" class="card" data-title="مواقع التواصل الاجتماعي">
-      <img src="https://i.ibb.co/Vcq1dr69/1756157590278.jpg" alt="التواصل الاجتماعي" loading="eager" decoding="async" fetchpriority="high" />
+      <img draggable="false" src="https://i.ibb.co/Vcq1dr69/1756157590278.jpg" alt="التواصل الاجتماعي" loading="eager" decoding="async" fetchpriority="high" />
       <h2>مواقع التواصل</h2>
     </a>
     <a href="software.html" class="card" data-title="اشتراكات البرامج">
-      <img src="https://i.ibb.co/XZHyMGSG/1756247096045.jpg" alt="البرامج" loading="eager" decoding="async" fetchpriority="high" />
+      <img draggable="false" src="https://i.ibb.co/XZHyMGSG/1756247096045.jpg" alt="البرامج" loading="eager" decoding="async" fetchpriority="high" />
       <h2>اشتراكات البرامج</h2>
     </a>
 
@@ -1207,35 +1321,35 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
           '</div>\n' +
           '<section class="categories">\n' +
             '<a href="freefireinbut.html" class="card auto" data-title="فري فاير">\n' +
-              '<img src="https://i.ibb.co/Lz2rDsgr/1756331102734.jpg" alt="فري فاير"/>\n' +
+              '<img draggable="false" src="https://i.ibb.co/Lz2rDsgr/1756331102734.jpg" alt="فري فاير"/>\n' +
               '<h2>فري فاير</h2>\n' +
             '</a>\n' +
             '<a href="pubg.html" class="card auto" data-title="ببجي">\n' +
-              '<img src="https://i.ibb.co/wFvwLZZR/1756330901302.jpg" alt="ببجي"/>\n' +
+              '<img draggable="false" src="https://i.ibb.co/wFvwLZZR/1756330901302.jpg" alt="ببجي"/>\n' +
               '<h2>ببجي</h2>\n' +
             '</a>\n' +
             '<a href="jawaker.html" class="card auto" data-title="جواكر">\n' +
-              '<img src="https://i.ibb.co/N6NmR9qr/1756415248251.jpg" alt="جواكر"/>\n' +
+              '<img draggable="false" src="https://i.ibb.co/N6NmR9qr/1756415248251.jpg" alt="جواكر"/>\n' +
               '<h2>جواكر</h2>\n' +
             '</a>\n' +
             '<a href="yala.html" class="card" data-title="يلا لودو">\n' +
-              '<img src="https://i.ibb.co/HpDvMDry/1756415249784.jpg" alt="يلا لودو"/>\n' +
+              '<img draggable="false" src="https://i.ibb.co/HpDvMDry/1756415249784.jpg" alt="يلا لودو"/>\n' +
               '<h2>يلا لودو</h2>\n' +
             '</a>\n' +
             '<a href="mobailleg.html" class="card" data-title="موبايل ليجند">\n' +
-              '<img src="https://i.ibb.co/xt399t27/1756424103296.jpg" alt="موبايل ليجند"/>\n' +
+              '<img draggable="false" src="https://i.ibb.co/xt399t27/1756424103296.jpg" alt="موبايل ليجند"/>\n' +
               '<h2>موبايل ليجند</h2>\n' +
             '</a>\n' +
             '<a href="8ball.html" class="card" data-title="بلياردو">\n' +
-              '<img src="https://i.ibb.co/SXdhVf8r/1756424101725.jpg" alt="بلياردو"/>\n' +
+              '<img draggable="false" src="https://i.ibb.co/SXdhVf8r/1756424101725.jpg" alt="بلياردو"/>\n' +
               '<h2>بلياردو</h2>\n' +
             '</a>\n' +
             '<a href="weplay.html" class="card" data-title="وي بلاي">\n' +
-              '<img src="https://i.ibb.co/hFGnwDYT/1756415246638.jpg" alt="وي بلاي"/>\n' +
+              '<img draggable="false" src="https://i.ibb.co/hFGnwDYT/1756415246638.jpg" alt="وي بلاي"/>\n' +
               '<h2>وي بلاي</h2>\n' +
             '</a>\n' +
             '<a href="bloodstrike.html" class="card" data-title="بلود سترايك">\n' +
-              '<img src="https://i.ibb.co/b5VMTNpz/1756415284620.jpg" alt="بلود سترايك"/>\n' +
+              '<img draggable="false" src="https://i.ibb.co/b5VMTNpz/1756415284620.jpg" alt="بلود سترايك"/>\n' +
               '<h2>بلود سترايك</h2>\n' +
             '</a>\n' +
           '</section>',
@@ -1245,11 +1359,11 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
           '</div>\n' +
           '<section class="categories">\n' +
             '<a href="instainbut.html" class="card auto featured" data-title="انستغرام">\n' +
-              '<img src="https://i.ibb.co/FqJS1zsW/IMG-20250915-WA0002.jpg" alt="انستغرام"/>\n' +
+              '<img draggable="false" src="https://i.ibb.co/FqJS1zsW/IMG-20250915-WA0002.jpg" alt="انستغرام"/>\n' +
               '<h2>انستغرام</h2>\n' +
             '</a>\n' +
             '<a href="facebook.html" class="card" data-title="فيسبوك">\n' +
-              '<img src="https://i.ibb.co/HJJy62Y/IMG-20250915-WA0005.jpg" alt="فيسبوك"/>\n' +
+              '<img draggable="false" src="https://i.ibb.co/HJJy62Y/IMG-20250915-WA0005.jpg" alt="فيسبوك"/>\n' +
               '<h2>فيسبوك</h2>\n' +
             '</a>\n' +
           '</section>',
@@ -1259,11 +1373,11 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
           '</div>\n' +
           '<section class="categories">\n' +
             '<a href="canva.html" class="card" data-title="كانفا">\n' +
-              '<img src="https://i.ibb.co/Zzc6JLS5/IMG-20250915-WA0001.jpg" alt="كانفا"/>\n' +
+              '<img draggable="false" src="https://i.ibb.co/Zzc6JLS5/IMG-20250915-WA0001.jpg" alt="كانفا"/>\n' +
               '<h2>كانفا</h2>\n' +
             '</a>\n' +
             '<a href="chatgpt.html" class="card" data-title="chatgpt Plus">\n' +
-              '<img src="https://i.ibb.co/7NXLfsJk/IMG-20250915-WA0004.jpg" alt="chatgpt Plus"/>\n' +
+              '<img draggable="false" src="https://i.ibb.co/7NXLfsJk/IMG-20250915-WA0004.jpg" alt="chatgpt Plus"/>\n' +
               '<h2>chatgpt Plus</h2>\n' +
             '</a>\n' +
           '</section>',
@@ -1273,19 +1387,19 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
           '</div>\n' +
           '<section class="categories">\n' +
             '<a href="freefireauto.html" class="card auto featured" data-title="فري فاير تلقائي">\n' +
-              '<img src="https://i.ibb.co/xKmTvgwS/1756498380860.jpg" alt="فري فاير تلقائي"/>\n' +
+              '<img draggable="false" src="https://i.ibb.co/xKmTvgwS/1756498380860.jpg" alt="فري فاير تلقائي"/>\n' +
               '<h2>فري فاير تلقائي</h2>\n' +
             '</a>\n' +
             '<a href="freefireN.html" class="card" data-title="فري فاير نيجيري">\n' +
-              '<img src="https://i.ibb.co/0pDbDVsc/1756498704843.jpg" alt="فري فاير نيجيري"/>\n' +
+              '<img draggable="false" src="https://i.ibb.co/0pDbDVsc/1756498704843.jpg" alt="فري فاير نيجيري"/>\n' +
               '<h2>فري فاير نيجيري</h2>\n' +
             '</a>\n' +
             '<a href="freefire.html" class="card" data-title="فري فاير يدوي">\n' +
-              '<img src="https://i.ibb.co/7xZwmG1F/1756498841823.jpg" alt="فري فاير يدوي"/>\n' +
+              '<img draggable="false" src="https://i.ibb.co/7xZwmG1F/1756498841823.jpg" alt="فري فاير يدوي"/>\n' +
               '<h2>فري فاير يدوي</h2>\n' +
             '</a>\n' +
             '<a href="freefiremembership.html" class="card" data-title="عضويات فري فاير">\n' +
-              '<img src="https://i.ibb.co/TB92Rhdc/IMG-20250915-WA0003.jpg" alt="عضويات فري فاير"/>\n' +
+              '<img draggable="false" src="https://i.ibb.co/TB92Rhdc/IMG-20250915-WA0003.jpg" alt="عضويات فري فاير"/>\n' +
               '<h2>عضويات فري فاير</h2>\n' +
             '</a>\n' +
           '</section>'
@@ -1389,8 +1503,72 @@ main{max-width:1200px;margin:20px auto;padding:0 15px}
     })();
   </script>
 
+  <!-- WhatsApp Group Join Modal -->
+  <style>
+    /* WhatsApp modal (scoped IDs to avoid conflicts) */
+    #wa-join-modal{position:fixed;inset:0;background-color:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:10000}
+    #wa-join-modal .wa-modal-content{background:var(--modal-bg);color:var(--modal-text);padding:24px 20px;border-radius:12px;max-width:420px;width:92%;box-shadow:var(--modal-shadow);text-align:center;border:1px solid var(--border-strong)}
+    #wa-join-modal h3{margin:0 0 8px;font-size:1.15rem}
+    #wa-join-modal p{margin:0 0 16px;color:var(--muted)}
+    #wa-join-modal .wa-actions{display:flex;gap:10px;justify-content:center}
+    #wa-join-modal .wa-btn{appearance:none;border:1px solid transparent;border-radius:12px;padding:12px 16px;font-size:1rem;cursor:pointer;min-width:120px;transition:transform .12s ease, box-shadow .2s ease, background-color .2s ease, border-color .2s ease}
+    #wa-join-modal .wa-btn:active{transform:translateY(1px)}
+    #wa-join-modal .wa-btn:focus-visible{outline:2px solid #25d36633; outline-offset:2px}
+    /* WhatsApp green primary */
+    #wa-join-modal .wa-primary{background:#25D366;color:#fff;box-shadow:0 6px 16px rgba(37,211,102,.28);display:inline-flex;align-items:center;justify-content:center;gap:8px}
+    #wa-join-modal .wa-primary:hover{background:#22c25e;box-shadow:0 8px 20px rgba(37,211,102,.36)}
+    #wa-join-modal .wa-primary i{font-size:1.1em}
+    /* Ghost button */
+    #wa-join-modal .wa-ghost{background:transparent;color:var(--text);border-color:var(--card-border)}
+    html[data-theme="light"] #wa-join-modal .wa-ghost:hover{background:rgba(0,0,0,.04)}
+    html[data-theme="dark"]  #wa-join-modal .wa-ghost:hover{background:rgba(255,255,255,.08)}
+  </style>
+  <div id="wa-join-modal" role="dialog" aria-modal="true" aria-labelledby="wa-title" aria-describedby="wa-desc">
+    <div class="wa-modal-content">
+      <h3 id="wa-title">انضم إلى قروب واتساب</h3>
+      <p id="wa-desc">انضم لقروب متجر قصي على واتساب لتصلك آخر العروض والتحديثات.</p>
+      <div class="wa-actions">
+        <a class="wa-btn wa-primary" href="https://chat.whatsapp.com/Lj4JIdlQCqo5sxK400SpuL" target="_blank" rel="noopener noreferrer">
+          <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
+          انضم الآن
+        </a>
+        <button type="button" class="wa-btn wa-ghost" id="wa-close-btn">لاحقًا</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      var modal = document.getElementById('wa-join-modal');
+      if(!modal) return;
+      var KEY = 'wa_join_once_v1';
+
+      function lockScroll(on){ try { document.body.style.overflow = on ? 'hidden' : ''; } catch(_){} }
+      function open(){ modal.style.display = 'flex'; lockScroll(true); try { localStorage.setItem(KEY, '1'); } catch(_){} }
+      function close(){ modal.style.display = 'none'; lockScroll(false); try { localStorage.setItem(KEY, '1'); } catch(_){} }
+
+      // Open on first visit only
+      var seen = '0';
+      try { seen = localStorage.getItem(KEY) || '0'; } catch(_){ seen = '0'; }
+      if (seen !== '1') {
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', open);
+        } else { open(); }
+      }
+
+      // Close handlers
+      var closeBtn = document.getElementById('wa-close-btn');
+      if (closeBtn) closeBtn.addEventListener('click', close);
+      modal.addEventListener('click', function(e){ if(e.target === modal) close(); });
+      document.addEventListener('keydown', function(e){ if(e.key === 'Escape') close(); });
+    })();
+  </script>
+
 </body>
 </html>
+
+
+
 
 
 
