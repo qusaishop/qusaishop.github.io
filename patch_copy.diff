@@ -1,0 +1,88 @@
+﻿*** Begin Patch
+*** Update File: edaa.html
+@@
+-      /* الحاسبة */
++      /* الحاسبة */
+       .calc { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+@@
+-      /* أزرار الإجراء */
++      /* أزرار الإجراء */
+       .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:8px; }
+       .btn { border:none; border-radius:10px; padding:10px 14px; cursor:pointer; font-weight:700; font-size:.95rem; }
+       .btn-primary { background:#0077cc; color:#fff; }
+       .btn-primary:hover { background:#005fa3; }
+       .btn-outline { background:#fff; border:1px solid #cbd5e1; }
+       .btn-outline:hover { background:#f9fafb; }
+       .btn[disabled] { opacity:.6; cursor:not-allowed; }
+ 
++      /* السماح بالنسخ داخل نافذة الإيداع صراحةً */
++      .modal, .modal * { -webkit-user-select: text; user-select: text; }
++
++      /* عناصر المعلومات + زر النسخ */
++      #methodInfo .info-item { display:flex; align-items:center; gap:10px; justify-content:space-between; }
++      #methodInfo .info-item strong { white-space:nowrap; }
++      #methodInfo .info-item .value { flex:1; overflow-wrap:anywhere; word-break:break-word; }
++      #methodInfo .copy-btn { border:1px solid #cbd5e1; background:#fff; color:#111827; border-radius:8px; padding:6px 10px; cursor:pointer; font-weight:700; font-size:.85rem; }
++      #methodInfo .copy-btn:hover { background:#f9fafb; }
++      body.dark-mode #methodInfo .copy-btn { background:#0b1220; color:#e6edf3; border-color:#334155; }
++
+@@
+-      <div id="methodInfo" class="info-list"></div>
++      <div id="methodInfo" class="info-list"></div>
+@@
+-    const grid = document.getElementById('grid');
++    const grid = document.getElementById('grid');
+@@
+-    const methodInfo = document.getElementById('methodInfo');
++    const methodInfo = document.getElementById('methodInfo');
++
++    // تمكين زر "نسخ" لكل سطر داخل نافذة الإيداع
++    function copyTextFallback(text){
++      try{
++        const ta = document.createElement('textarea');
++        ta.value = text;
++        ta.style.position = 'fixed';
++        ta.style.opacity = '0';
++        document.body.appendChild(ta);
++        ta.focus();
++        ta.select();
++        const ok = document.execCommand('copy');
++        document.body.removeChild(ta);
++        return ok;
++      }catch(_){ return false; }
++    }
++    async function copyText(text){
++      try{
++        if (navigator.clipboard && navigator.clipboard.writeText){
++          await navigator.clipboard.writeText(text);
++          return true;
++        }
++      }catch(_){ /* fallback below */ }
++      return copyTextFallback(text);
++    }
++    function showCopied(btn){
++      if(!btn) return;
++      const orig = btn.dataset.orig || btn.textContent;
++      btn.dataset.orig = orig;
++      btn.textContent = 'تم النسخ';
++      btn.disabled = true;
++      setTimeout(()=>{ btn.textContent = btn.dataset.orig; btn.disabled = false; }, 1200);
++    }
++    methodInfo.addEventListener('click', async (e)=>{
++      const btn = e.target.closest && e.target.closest('.copy-btn');
++      if(!btn) return;
++      const container = btn.closest('.info-item');
++      const valEl = container ? container.querySelector('.value') : null;
++      const text = valEl ? (valEl.textContent || '').trim() : '';
++      if (!text) return;
++      const ok = await copyText(text);
++      if (ok) showCopied(btn);
++    });
+@@
+-      methodInfo.innerHTML = fields.length
+-        ? fields.map(([k,v])=><div class="info-item"><strong></strong> <div></div></div>).join('')
+-        : '<div class="info-item">لا توجد تفاصيل متاحة.</div>';
++      methodInfo.innerHTML = fields.length
++        ? fields.map(([k,v])=><div class="info-item"><strong></strong><div class="value"></div><button type="button" class="copy-btn"><i class="fa-regular fa-copy"></i> نسخ</button></div>).join('')
++        : '<div class="info-item">لا توجد تفاصيل متاحة.</div>';
+*** End Patch

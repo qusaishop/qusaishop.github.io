@@ -431,8 +431,8 @@ body.dark-mode .modal-content{ background:#111827; color:#e6edf3; box-shadow:0 1
 .info-item { background:#f8fafc; border:1px solid #e6eef7; border-radius:10px; padding:10px; font-size:.95rem; }
 .hint { color:#667085; font-size:.9rem; }
 
-      /* الحاسبة */
-      .calc { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+/* الحاسبة */
+.calc { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
 .calc .field { background:#f9fafb; border:1px solid #e5e7eb; border-radius:12px; padding:10px; }
 .calc label { display:block; font-size:.85rem; font-weight:600; color:#475467; margin-bottom:4px; }
 .calc input { width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-size:1rem; outline:none; }
@@ -442,21 +442,14 @@ body.dark-mode .modal-content{ background:#111827; color:#e6edf3; box-shadow:0 1
 .rate-line { display:flex; flex-wrap:wrap; align-items:center; gap:10px; font-size:.95rem; }
 .rate-line .chip { background:#f1f5f9; border:1px solid #e2e8f0; border-radius:9999px; padding:6px 10px; }
 
-      /* أزرار الإجراء */
-      .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:8px; }
-      .btn { border:none; border-radius:10px; padding:10px 14px; cursor:pointer; font-weight:700; font-size:.95rem; }
-      .btn-primary { background:#0077cc; color:#fff; }
-      .btn-primary:hover { background:#005fa3; }
-      .btn-outline { background:#fff; border:1px solid #cbd5e1; }
-      .btn-outline:hover { background:#f9fafb; }
-      .btn[disabled] { opacity:.6; cursor:not-allowed; }
-
-      /* حالة نجاح لزر إثبات الدفع */
-      #proofTrigger.success { background:#16a34a; color:#fff; border-color:#15803d; }
-      body.dark-mode #proofTrigger.success { background:#16a34a; color:#fff; border-color:#166534; }
-
-      /* السماح بالنسخ داخل نافذة الإيداع للجوال عند تحديد النص */
-      .modal, .modal * { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+/* أزرار الإجراء */
+.actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:8px; }
+.btn { border:none; border-radius:10px; padding:10px 14px; cursor:pointer; font-weight:700; font-size:.95rem; }
+.btn-primary { background:#0077cc; color:#fff; }
+.btn-primary:hover { background:#005fa3; }
+.btn-outline { background:#fff; border:1px solid #cbd5e1; }
+.btn-outline:hover { background:#f9fafb; }
+.btn[disabled] { opacity:.6; cursor:not-allowed; }
 
 /* المعاينة */
 .preview { font-size:.9rem; color:#1d4ed8; word-break:break-all; }
@@ -755,7 +748,6 @@ body:not(.dark-mode) .btn-outline { background:#f3f4f6; color:#111827; border-co
       window.turnstileToken = null;
       uploadedProofUrl = null;
       updateSubmitState();
-      try { updateProofUI(); } catch(_){ }
     };
 
     /* ========================= عناصر DOM ========================= */
@@ -771,7 +763,6 @@ body:not(.dark-mode) .btn-outline { background:#f3f4f6; color:#111827; border-co
     const methodInfo = document.getElementById('methodInfo');
 
     const proofFile = document.getElementById('proofFile');
-    const proofTrigger = document.getElementById('proofTrigger');
     const submitDepositBtn = document.getElementById('submitDepositBtn');
     const proofPreview = document.getElementById('proofPreview');
 
@@ -822,7 +813,6 @@ body:not(.dark-mode) .btn-outline { background:#f3f4f6; color:#111827; border-co
       proofPreview.textContent = '';
       updateSubmitState();
       try { if (window.turnstile) turnstile.reset(); } catch(_){}
-      try { updateProofUI(); } catch(_){ }
     }
 
     /* ========================= رسم القوائم ========================= */
@@ -970,24 +960,10 @@ body:not(.dark-mode) .btn-outline { background:#f3f4f6; color:#111827; border-co
     /* ========================= اختيار ملف + رفع تلقائي (بدون تسجيل) ========================= */
     const proofFileEl = document.getElementById('proofFile');
 
-    function updateProofUI(){
-      try{
-        if (!proofTrigger) return;
-        if (uploadedProofUrl){
-          proofTrigger.classList.add('success');
-          proofTrigger.innerHTML = '<i class="fa-solid fa-check"></i>';
-        } else {
-          proofTrigger.classList.remove('success');
-          proofTrigger.innerHTML = 'اثبات الدفع <i class="fa-solid fa-paperclip"></i>';
-        }
-      }catch(_){ }
-    }
-
     proofFileEl.addEventListener('change', async ()=>{
       currentProofFile = proofFileEl.files && proofFileEl.files[0] ? proofFileEl.files[0] : null;
       uploadedProofUrl = null;
       proofPreview.textContent = currentProofFile ? `جاري رفع: ${currentProofFile.name}` : '';
-      updateProofUI();
       if (currentProofFile) {
         if (window.turnstileToken) {
           try { await autoUploadProof(); } catch(e){ console.error(e); }
@@ -1013,7 +989,6 @@ body:not(.dark-mode) .btn-outline { background:#f3f4f6; color:#111827; border-co
       if(!uploadedProofUrl) throw new Error('ImgBB لم يُرجع رابطًا صالحًا.');
 
       proofPreview.innerHTML = `تم الرفع: <a href="${uploadedProofUrl}" target="_blank" rel="noopener">فتح الرابط</a>`;
-      updateProofUI();
       updateSubmitState();
     }
 

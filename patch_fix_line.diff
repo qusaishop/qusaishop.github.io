@@ -1,0 +1,10 @@
+﻿*** Begin Patch
+*** Update File: edaa.html
+@@
+-      methodInfo.innerHTML = fields.length
+-        ? fields.map(([k,v])=><div class="info-item"><strong></strong><div class="value"></div><button type="button" class="copy-btn"><i class="fa-regular fa-copy"></i> نسخ</button></div>).join('')
+-        : '<div class="info-item">لا توجد تفاصيل متاحة.</div>';
++      methodInfo.innerHTML = fields.length
++        ? fields.map(([k,v])=><div class="info-item"><strong></strong> <div></div></div>).join('')
++        : '<div class="info-item">لا توجد تفاصيل متاحة.</div>';
+*** End Patch
