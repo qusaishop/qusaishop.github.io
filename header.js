@@ -2,11 +2,21 @@ const _0x1b24b5=_0x4b45;(function(_0x51f20d,_0x29d0c9){const _0x2e4924=_0x4b45,_
 (function(){
   function injectLogoutIntoSidebar() {
     try {
+      // Only show logout when user is authenticated
+      var isLoggedIn = false;
+      try { if (window.firebase && firebase.auth && typeof firebase.auth === 'function') { isLoggedIn = !!firebase.auth().currentUser; } } catch(_){}
+
       var container = document.getElementById('sidebarContainer');
       if (!container) return false;
       var list = container.querySelector('#sidebar ul') || container.querySelector('ul');
       if (!list) return false;
-      if (list.querySelector('.logout-item, #logoutSideLink')) return true;
+
+      var existing = list.querySelector('.logout-item, #logoutSideLink');
+      if (!isLoggedIn) { // not logged-in: ensure it's hidden/removed
+        try { if (existing) existing.parentElement && existing.parentElement.remove(); } catch(_){}
+        return false;
+      }
+      if (existing) return true;
 
       var li = document.createElement('li');
       li.className = 'logout-item';
@@ -42,7 +52,18 @@ const _0x1b24b5=_0x4b45;(function(_0x51f20d,_0x29d0c9){const _0x2e4924=_0x4b45,_
     } catch(_) { return false; }
   }
 
+  function watchAuth(){
+    try{
+      if (window.firebase && firebase.auth && typeof firebase.auth === 'function') {
+        firebase.auth().onAuthStateChanged(function(){
+          try { injectLogoutIntoSidebar(); } catch(_){}
+        });
+      }
+    }catch(_){}
+  }
+
   function startInjectWatcher(){
+    watchAuth();
     if (injectLogoutIntoSidebar()) return;
     var tries = 0;
     var iv = setInterval(function(){
@@ -62,4 +83,75 @@ const _0x1b24b5=_0x4b45;(function(_0x51f20d,_0x29d0c9){const _0x2e4924=_0x4b45,_
   } else {
     startInjectWatcher();
   }
+})();
+
+
+
+// Remove developer credit in Support section ("تطوير ليث")
+(function removeDevCreditFromSupport(){
+  try{
+    function tryRemove(){
+      try{
+        var anchors = document.querySelectorAll('a');
+        anchors.forEach(function(a){
+          try{
+            var txt = (a.textContent || '').replace(/\s+/g,' ').trim();
+            if (!txt) return;
+            // Match common phrasings of the credit
+            var isDevCredit = /هذا الموقع من تطوير|تطوير\s+ليث|ليث\s+قرقز/.test(txt);
+            if (isDevCredit) {
+              // Remove the link node
+              if (a && a.parentElement) a.remove();
+            }
+          }catch(_){ }
+        });
+      }catch(_){ }
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function(){
+        tryRemove();
+        setTimeout(tryRemove, 200);
+        setTimeout(tryRemove, 1000);
+      });
+    } else {
+      tryRemove();
+      setTimeout(tryRemove, 200);
+      setTimeout(tryRemove, 1000);
+    }
+  }catch(_){ }
+})();
+
+
+// Remove developer credit in Support section ("تطوير ليث")
+(function removeDevCreditFromSupport(){
+  try{
+    function tryRemove(){
+      try{
+        var anchors = document.querySelectorAll('a');
+        anchors.forEach(function(a){
+          try{
+            var txt = (a.textContent || '').replace(/\s+/g,' ').trim();
+            if (!txt) return;
+            // Match common phrasings of the credit
+            var isDevCredit = /هذا الموقع من تطوير|تطوير\s+ليث|ليث\s+قرقز/.test(txt);
+            if (isDevCredit) {
+              // Remove the link node
+              if (a && a.parentElement) a.remove();
+            }
+          }catch(_){ }
+        });
+      }catch(_){ }
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function(){
+        tryRemove();
+        setTimeout(tryRemove, 200);
+        setTimeout(tryRemove, 1000);
+      });
+    } else {
+      tryRemove();
+      setTimeout(tryRemove, 200);
+      setTimeout(tryRemove, 1000);
+    }
+  }catch(_){ }
 })();
